@@ -1,6 +1,7 @@
 
 export type UserRole = 'user' | 'premium' | 'pro' | 'admin';
 export type Gender = 'Male' | 'Female' | 'Other' | 'Prefer not to say';
+export type VerificationStatus = 'none' | 'pending' | 'verified' | 'rejected';
 
 export interface User {
   uid: string;
@@ -9,6 +10,8 @@ export interface User {
   photoURL: string;
   bio: string;
   isPro: boolean;
+  isVerified?: boolean;
+  verificationStatus?: VerificationStatus;
   role: UserRole;
   joinedAt: number;
   age?: number;
@@ -24,12 +27,23 @@ export interface User {
   };
 }
 
+export interface VerificationRequest {
+  id: string;
+  userId: string;
+  userName: string;
+  userPhoto: string;
+  imageUrl: string;
+  status: 'pending' | 'approved' | 'rejected';
+  createdAt: number;
+}
+
 export interface Post {
   id: string;
   authorId: string;
   authorName: string;
   authorPhoto: string;
   authorRole?: UserRole;
+  authorVerified?: boolean;
   content: string;
   imageUrl?: string;
   likes: string[];
@@ -45,6 +59,7 @@ export interface Comment {
   authorName: string;
   authorPhoto: string;
   authorRole?: UserRole;
+  authorVerified?: boolean;
   text: string;
   createdAt: number;
 }
@@ -55,6 +70,7 @@ export interface ChatMessage {
   senderName?: string;
   senderPhoto?: string;
   senderRole?: UserRole;
+  senderVerified?: boolean;
   text: string;
   createdAt: number;
   chatId?: string;
