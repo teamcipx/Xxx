@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { User, Post, Comment } from '../types';
+import { User, Post, Comment, Gender } from '../types';
 import { generateBio } from '../services/gemini';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { db } from '../services/firebase';
@@ -24,7 +24,12 @@ const ProfileView: React.FC<{ activeUser: User }> = ({ activeUser }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState('');
   const [editBio, setEditBio] = useState('');
-  const [editSocials, setEditSocials] = useState({ twitter: '', github: '', instagram: '', website: '' });
+  const [editAge, setEditAge] = useState<number>(18);
+  const [editGender, setEditGender] = useState<Gender>('Male');
+  const [editInterests, setEditInterests] = useState('');
+  const [editSocials, setEditSocials] = useState({ 
+    twitter: '', github: '', instagram: '', website: '', telegram: '', facebook: '' 
+  });
   const [isSaving, setIsSaving] = useState(false);
   const [dpUploading, setDpUploading] = useState(false);
 
@@ -59,11 +64,16 @@ const ProfileView: React.FC<{ activeUser: User }> = ({ activeUser }) => {
   const initializeEditFields = (user: User) => {
     setEditName(user.displayName);
     setEditBio(user.bio);
+    setEditAge(user.age || 18);
+    setEditGender(user.gender || 'Male');
+    setEditInterests(user.interests || '');
     setEditSocials({
       twitter: user.socials?.twitter || '',
       github: user.socials?.github || '',
       instagram: user.socials?.instagram || '',
       website: user.socials?.website || '',
+      telegram: user.socials?.telegram || '',
+      facebook: user.socials?.facebook || '',
     });
   };
 
@@ -87,7 +97,6 @@ const ProfileView: React.FC<{ activeUser: User }> = ({ activeUser }) => {
       const postsSnap = await getDocs(postsQ);
       setUserPosts(postsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post)));
     } catch (err: any) {
-      console.error("Posts Fetch Error:", err);
       if (err.code === 'failed-precondition') setIndexErrors(prev => ({ ...prev, posts: true }));
     }
 
@@ -101,7 +110,6 @@ const ProfileView: React.FC<{ activeUser: User }> = ({ activeUser }) => {
       const commentsSnap = await getDocs(commentsQ);
       setUserComments(commentsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Comment)));
     } catch (err: any) {
-      console.error("Comments Fetch Error:", err);
       if (err.code === 'failed-precondition') setIndexErrors(prev => ({ ...prev, comments: true }));
     }
 
@@ -118,9 +126,9 @@ const ProfileView: React.FC<{ activeUser: User }> = ({ activeUser }) => {
       const userRef = doc(db, 'users', profileUser.uid);
       await updateDoc(userRef, { photoURL: url });
       setProfileUser({ ...profileUser, photoURL: url });
-      alert("Display picture updated successfully!");
+      alert("Display picture updated!");
     } catch (err) {
-      alert("Failed to upload image.");
+      alert("Upload failed.");
     } finally {
       setDpUploading(false);
     }
@@ -134,14 +142,17 @@ const ProfileView: React.FC<{ activeUser: User }> = ({ activeUser }) => {
       const updates = {
         displayName: editName,
         bio: editBio,
+        age: editAge,
+        gender: editGender,
+        interests: editInterests,
         socials: editSocials
       };
       await updateDoc(userRef, updates);
       setProfileUser({ ...profileUser, ...updates });
       setIsEditing(false);
-      alert("Profile updated!");
+      alert("Signal updated!");
     } catch (err) {
-      alert("Failed to save changes.");
+      alert("Failed to save.");
     } finally {
       setIsSaving(false);
     }
@@ -158,21 +169,8 @@ const ProfileView: React.FC<{ activeUser: User }> = ({ activeUser }) => {
         setProfileUser({ ...profileUser, bio: newBio });
         setEditBio(newBio);
       }
-    } catch (err) {
-      alert("Error generating bio.");
     } finally {
       setIsGenerating(false);
-    }
-  };
-
-  const handleDeletePost = async (postId: string) => {
-    if (window.confirm("Delete this post permanently?")) {
-      try {
-        await deleteDoc(doc(db, 'posts', postId));
-        setUserPosts(prev => prev.filter(p => p.id !== postId));
-      } catch (err) {
-        alert("Failed to delete.");
-      }
     }
   };
 
@@ -182,56 +180,37 @@ const ProfileView: React.FC<{ activeUser: User }> = ({ activeUser }) => {
     navigate(`/chat/${combinedId}`);
   };
 
-  if (loading) {
-    return (
-      <div className="flex justify-center p-20">
-        <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-indigo-500"></div>
-      </div>
-    );
-  }
+  if (loading) return <div className="flex justify-center p-20 animate-pulse text-rose-500">Accessing Signal...</div>;
 
-  if (!profileUser) {
-    return (
-      <div className="text-center p-20 glass-effect rounded-[2rem] border border-white/5">
-        <h2 className="text-xl font-black text-slate-100 uppercase tracking-widest">User Lost</h2>
-        <p className="text-slate-500 mt-2 font-medium">This signal has vanished from the forum.</p>
-      </div>
-    );
-  }
+  if (!profileUser) return <div className="text-center p-20 text-slate-500">Signal lost.</div>;
 
   return (
-    <div className="max-w-3xl mx-auto space-y-8 animate-fadeIn pb-20">
+    <div className="max-w-3xl mx-auto space-y-6 pb-20 px-2 md:px-0">
       <div className="glass-effect rounded-[2.5rem] overflow-hidden shadow-2xl border border-white/10 relative">
-        <div className="h-40 bg-gradient-to-br from-indigo-600 to-purple-800 relative">
-           <div className="absolute inset-0 bg-slate-950/20 backdrop-blur-[2px]"></div>
+        <div className="h-40 bg-gradient-to-br from-rose-900 via-slate-900 to-indigo-900 relative">
+           <div className="absolute inset-0 bg-slate-950/40 backdrop-blur-[1px]"></div>
         </div>
-        <div className="px-10 pb-10 -mt-16 relative">
+        <div className="px-6 md:px-10 pb-10 -mt-16 relative">
           <div className="flex justify-between items-end mb-8">
             <div className="relative group">
-              <img src={profileUser.photoURL || `https://ui-avatars.com/api/?name=${profileUser.displayName}`} alt="profile" className={`w-32 h-32 rounded-[2rem] object-cover ring-8 ring-slate-950 shadow-2xl transition-transform duration-500 ${dpUploading ? 'opacity-50' : 'group-hover:scale-105'}`} />
+              <img src={profileUser.photoURL} alt="profile" className={`w-32 h-32 rounded-[2rem] object-cover ring-8 ring-slate-950 shadow-2xl transition-all duration-500 ${dpUploading ? 'opacity-50' : 'group-hover:scale-105 group-hover:rotate-1'}`} />
               {isOwnProfile && (
                 <label className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 rounded-[2rem] cursor-pointer transition-opacity">
                   <input type="file" className="hidden" accept="image/*" onChange={handleUpdateDP} disabled={dpUploading} />
-                  <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                  <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /></svg>
                 </label>
               )}
               <div className="absolute -bottom-1 -right-1 transform rotate-12">
-                <UserBadge role={profileUser.role} className="!px-3 !py-1.5 !text-[10px]" />
+                <UserBadge role={profileUser.role} />
               </div>
             </div>
             <div className="flex gap-2">
               {isOwnProfile ? (
-                <button 
-                  onClick={() => setIsEditing(!isEditing)}
-                  className="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-2.5 rounded-2xl text-xs font-black uppercase tracking-widest transition-all shadow-lg shadow-indigo-600/20"
-                >
-                  {isEditing ? 'Cancel Edit' : 'Edit Profile'}
+                <button onClick={() => setIsEditing(!isEditing)} className="bg-rose-600 hover:bg-rose-500 text-white px-6 py-2.5 rounded-2xl text-xs font-black uppercase tracking-widest transition-all shadow-lg shadow-rose-600/20">
+                  {isEditing ? 'Cancel' : 'Edit Signal'}
                 </button>
               ) : (
-                <button 
-                  onClick={startPrivateChat}
-                  className="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-2.5 rounded-2xl text-xs font-black uppercase tracking-widest transition-all shadow-lg shadow-indigo-600/20 flex items-center gap-2"
-                >
+                <button onClick={startPrivateChat} className="bg-rose-600 hover:bg-rose-500 text-white px-6 py-2.5 rounded-2xl text-xs font-black uppercase tracking-widest transition-all shadow-lg shadow-rose-600/20 flex items-center gap-2">
                   <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" /></svg>
                   Message
                 </button>
@@ -240,195 +219,134 @@ const ProfileView: React.FC<{ activeUser: User }> = ({ activeUser }) => {
           </div>
           
           {isEditing ? (
-            <div className="space-y-6 animate-fadeIn bg-slate-900/40 p-8 rounded-[2rem] border border-indigo-500/20 mb-8">
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 ml-1">Display Name</label>
-                  <input
-                    type="text"
-                    value={editName}
-                    onChange={(e) => setEditName(e.target.value)}
-                    className="w-full bg-slate-950/60 border border-white/5 rounded-2xl px-5 py-3 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/40 transition-all"
-                  />
+            <div className="space-y-4 bg-slate-900/40 p-6 rounded-[2rem] border border-rose-500/20 mb-8 animate-fadeIn">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="md:col-span-2">
+                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1 block">Display Name</label>
+                  <input type="text" value={editName} onChange={(e) => setEditName(e.target.value)} className="w-full bg-slate-950/60 border border-white/5 rounded-xl px-4 py-2 text-slate-100 text-xs focus:ring-1 focus:ring-rose-500/40 outline-none" />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 ml-1">Bio</label>
-                  <textarea
-                    value={editBio}
-                    onChange={(e) => setEditBio(e.target.value)}
-                    className="w-full bg-slate-950/60 border border-white/5 rounded-2xl px-5 py-3 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/40 transition-all min-h-[100px]"
-                  />
+                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1 block">Age</label>
+                  <input type="number" value={editAge} onChange={(e) => setEditAge(parseInt(e.target.value))} className="w-full bg-slate-950/60 border border-white/5 rounded-xl px-4 py-2 text-slate-100 text-xs focus:ring-1 focus:ring-rose-500/40 outline-none" />
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 ml-1">Twitter (URL)</label>
-                    <input type="text" value={editSocials.twitter} onChange={(e) => setEditSocials({...editSocials, twitter: e.target.value})} className="w-full bg-slate-950/60 border border-white/5 rounded-2xl px-5 py-3 text-slate-100 text-xs focus:ring-2 focus:ring-indigo-500/40 transition-all" />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 ml-1">GitHub (URL)</label>
-                    <input type="text" value={editSocials.github} onChange={(e) => setEditSocials({...editSocials, github: e.target.value})} className="w-full bg-slate-950/60 border border-white/5 rounded-2xl px-5 py-3 text-slate-100 text-xs focus:ring-2 focus:ring-indigo-500/40 transition-all" />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 ml-1">Instagram (URL)</label>
-                    <input type="text" value={editSocials.instagram} onChange={(e) => setEditSocials({...editSocials, instagram: e.target.value})} className="w-full bg-slate-950/60 border border-white/5 rounded-2xl px-5 py-3 text-slate-100 text-xs focus:ring-2 focus:ring-indigo-500/40 transition-all" />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 ml-1">Website (URL)</label>
-                    <input type="text" value={editSocials.website} onChange={(e) => setEditSocials({...editSocials, website: e.target.value})} className="w-full bg-slate-950/60 border border-white/5 rounded-2xl px-5 py-3 text-slate-100 text-xs focus:ring-2 focus:ring-indigo-500/40 transition-all" />
-                  </div>
+                <div>
+                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1 block">Gender</label>
+                  <select value={editGender} onChange={(e) => setEditGender(e.target.value as Gender)} className="w-full bg-slate-950/60 border border-white/5 rounded-xl px-4 py-2 text-slate-100 text-xs focus:ring-1 focus:ring-rose-500/40 outline-none appearance-none">
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+                <div className="md:col-span-2">
+                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1 block">Bio</label>
+                  <textarea value={editBio} onChange={(e) => setEditBio(e.target.value)} className="w-full bg-slate-950/60 border border-white/5 rounded-xl px-4 py-2 text-slate-100 text-xs h-20 outline-none focus:ring-1 focus:ring-rose-500/40" />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1 block">Interests</label>
+                  <input type="text" value={editInterests} onChange={(e) => setEditInterests(e.target.value)} className="w-full bg-slate-950/60 border border-white/5 rounded-xl px-4 py-2 text-slate-100 text-xs outline-none focus:ring-1 focus:ring-rose-500/40" />
+                </div>
+                <div>
+                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1 block">Telegram Link</label>
+                  <input type="text" value={editSocials.telegram} onChange={(e) => setEditSocials({...editSocials, telegram: e.target.value})} className="w-full bg-slate-950/60 border border-white/5 rounded-xl px-4 py-2 text-slate-100 text-xs outline-none focus:ring-1 focus:ring-rose-500/40" />
+                </div>
+                <div>
+                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1 block">FB Link</label>
+                  <input type="text" value={editSocials.facebook} onChange={(e) => setEditSocials({...editSocials, facebook: e.target.value})} className="w-full bg-slate-950/60 border border-white/5 rounded-xl px-4 py-2 text-slate-100 text-xs outline-none focus:ring-1 focus:ring-rose-500/40" />
                 </div>
               </div>
-              <button 
-                onClick={handleSaveProfile} 
-                disabled={isSaving}
-                className="w-full bg-indigo-600 hover:bg-indigo-500 text-white py-4 rounded-2xl font-black uppercase tracking-widest transition-all shadow-xl shadow-indigo-600/20 active:scale-95"
-              >
-                {isSaving ? 'Saving Signal...' : 'Apply Changes'}
+              <button onClick={handleSaveProfile} disabled={isSaving} className="w-full bg-rose-600 hover:bg-rose-500 text-white py-3 rounded-xl font-black uppercase tracking-widest text-[10px] transition-all shadow-xl active:scale-95">
+                {isSaving ? 'Processing...' : 'Sync Identity'}
               </button>
             </div>
           ) : (
-            <>
-              <div className="space-y-1 mb-6">
-                <h2 className="text-3xl font-black text-slate-100 tracking-tight">{profileUser.displayName}</h2>
-                <div className="flex items-center gap-4 mt-2">
-                  <p className="text-indigo-400 text-xs font-black uppercase tracking-[0.2em]">@{profileUser.displayName.toLowerCase().replace(/ /g, '_')}</p>
-                  <div className="flex gap-3">
-                    {profileUser.socials?.twitter && (
-                      <a href={profileUser.socials.twitter} target="_blank" rel="noreferrer" className="text-slate-500 hover:text-white transition-colors">
-                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.84 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/></svg>
-                      </a>
-                    )}
-                    {profileUser.socials?.github && (
-                      <a href={profileUser.socials.github} target="_blank" rel="noreferrer" className="text-slate-500 hover:text-white transition-colors">
-                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
-                      </a>
-                    )}
-                    {profileUser.socials?.website && (
-                      <a href={profileUser.socials.website} target="_blank" rel="noreferrer" className="text-slate-500 hover:text-white transition-colors">
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>
-                      </a>
-                    )}
+            <div className="space-y-6">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                  <h2 className="text-3xl font-black text-slate-100 tracking-tight">{profileUser.displayName}</h2>
+                  <div className="flex items-center gap-3 mt-1.5">
+                    <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest ${profileUser.gender === 'Female' ? 'bg-rose-500/20 text-rose-400' : 'bg-blue-500/20 text-blue-400'}`}>
+                      {profileUser.gender || 'Member'} • {profileUser.age || 'Mature'}
+                    </span>
+                    <span className="text-slate-600 text-[10px] font-bold">Signal established {new Date(profileUser.joinedAt).toLocaleDateString()}</span>
                   </div>
+                </div>
+                
+                <div className="flex items-center gap-3">
+                  {profileUser.socials?.telegram && (
+                    <a href={profileUser.socials.telegram.startsWith('http') ? profileUser.socials.telegram : `https://t.me/${profileUser.socials.telegram.replace('@','')}`} target="_blank" rel="noreferrer" className="bg-sky-500/10 hover:bg-sky-500/20 text-sky-400 p-2.5 rounded-xl transition-all border border-sky-500/20">
+                      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69.01-.03.01-.14-.07-.2-.08-.06-.19-.04-.27-.02-.11.02-1.93 1.23-5.46 3.62-.51.35-.98.52-1.4.51-.46-.01-1.35-.26-2.01-.48-.81-.27-1.45-.42-1.39-.89.03-.25.38-.51 1.05-.78 4.12-1.79 6.87-2.97 8.24-3.54 3.93-1.63 4.74-1.92 5.28-1.93.12 0 .38.03.55.17.14.12.18.28.19.4z"/></svg>
+                    </a>
+                  )}
+                  {profileUser.socials?.facebook && (
+                    <a href={profileUser.socials.facebook.startsWith('http') ? profileUser.socials.facebook : `https://fb.com/${profileUser.socials.facebook}`} target="_blank" rel="noreferrer" className="bg-blue-600/10 hover:bg-blue-600/20 text-blue-500 p-2.5 rounded-xl transition-all border border-blue-600/20">
+                      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M22.675 0h-21.35c-.732 0-1.325.593-1.325 1.325v21.351c0 .731.593 1.324 1.325 1.324h11.495v-9.294h-3.128v-3.622h3.128v-2.671c0-3.1 1.893-4.788 4.659-4.788 1.325 0 2.463.099 2.795.143v3.24h-1.918c-1.504 0-1.795.715-1.795 1.763v2.313h3.587l-.467 3.622h-3.12v9.293h6.116c.73 0 1.323-.593 1.323-1.325v-21.35c0-.732-.593-1.325-1.325-1.325z"/></svg>
+                    </a>
+                  )}
                 </div>
               </div>
 
-              <div className="bg-slate-900/50 rounded-2xl p-6 border border-white/5 mb-8">
-                <p className="text-slate-300 font-medium leading-relaxed italic">"{profileUser.bio || "Crafting a unique presence in the forum..."}"</p>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                 <div className="md:col-span-2 bg-slate-900/50 rounded-2xl p-6 border border-white/5 h-full">
+                    <p className="text-[10px] font-black text-rose-500 uppercase tracking-widest mb-2">Member Bio</p>
+                    <p className="text-slate-300 font-medium leading-relaxed italic">"{profileUser.bio || "Crafting an elite signal presence..."}"</p>
+                 </div>
+                 <div className="bg-slate-900/50 rounded-2xl p-6 border border-white/5">
+                    <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-2">Interests</p>
+                    <div className="flex flex-wrap gap-2">
+                       {(profileUser.interests || "Casual Conversation").split(',').map((tag, i) => (
+                         <span key={i} className="bg-slate-800 text-slate-400 px-2.5 py-1 rounded-lg text-[9px] font-bold border border-white/5">{tag.trim()}</span>
+                       ))}
+                    </div>
+                 </div>
               </div>
-            </>
+            </div>
           )}
-
-          <div className="grid grid-cols-2 gap-6 border-t border-white/5 pt-8">
-            <div className="bg-slate-900/30 p-4 rounded-2xl border border-white/5 text-center">
-              <p className="text-xl font-black text-slate-100">{new Date(profileUser.joinedAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short' })}</p>
-              <p className="text-[10px] text-slate-500 uppercase font-black tracking-widest mt-1">Arrival Date</p>
-            </div>
-            <div className="bg-slate-900/30 p-4 rounded-2xl border border-white/5 text-center">
-              <p className={`text-xl font-black ${profileUser.role !== 'user' ? 'text-indigo-400' : 'text-slate-100'}`}>
-                {profileUser.role === 'admin' ? 'System Administrator' : 
-                 profileUser.role === 'pro' ? 'Pro Elite Citizen' : 
-                 profileUser.role === 'premium' ? 'Premium Member' : 'Community Member'}
-              </p>
-              <p className="text-[10px] text-slate-500 uppercase font-black tracking-widest mt-1">Citizen Level</p>
-            </div>
-          </div>
         </div>
       </div>
 
-      {isOwnProfile && (
-        <div className="glass-effect rounded-[2rem] p-8 shadow-xl border border-indigo-500/10 relative overflow-hidden">
-          <h3 className="text-lg font-black text-slate-100 mb-4 flex items-center gap-3">
-            <div className="bg-indigo-600 p-2 rounded-lg text-white">✨</div> 
-            AI Bio Personalization
-          </h3>
-          <p className="text-[10px] text-slate-500 uppercase font-black mb-4 tracking-widest">Generate a unique persona based on your interests</p>
-          <div className="flex flex-col sm:flex-row gap-3">
-            <input
-              type="text"
-              value={interests}
-              onChange={(e) => setInterests(e.target.value)}
-              placeholder="What defines you? (e.g., Coding, Gaming, Space...)"
-              className="flex-1 bg-slate-950/50 rounded-2xl px-5 py-4 text-slate-100 border border-white/5 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 transition-all font-medium"
-            />
-            <button
-              onClick={handleGenerateBio}
-              disabled={isGenerating || !interests}
-              className={`bg-indigo-600 hover:bg-indigo-500 text-white px-8 py-4 rounded-2xl font-black uppercase tracking-widest transition-all shadow-lg shadow-indigo-600/20 active:scale-95 ${isGenerating ? 'opacity-50 grayscale' : ''}`}
-            >
-              {isGenerating ? 'Synthesizing...' : 'Synthesize Bio'}
-            </button>
-          </div>
-        </div>
-      )}
+      <div className="mt-4">
+        <AdsterraAd id="profile-signal-mid" />
+      </div>
 
       {canSeeActivity && (
         <div className="glass-effect rounded-[2.5rem] overflow-hidden shadow-xl border border-white/5">
           <div className="flex border-b border-white/5">
-            <button 
-              onClick={() => setActiveTab('posts')}
-              className={`flex-1 py-5 text-xs font-black uppercase tracking-[0.2em] transition-all ${activeTab === 'posts' ? 'text-indigo-400 bg-indigo-500/5' : 'text-slate-500 hover:text-slate-300'}`}
-            >
-              Recent Posts
+            <button onClick={() => setActiveTab('posts')} className={`flex-1 py-5 text-xs font-black uppercase tracking-[0.2em] transition-all ${activeTab === 'posts' ? 'text-rose-500 bg-rose-500/5' : 'text-slate-500 hover:text-slate-300'}`}>
+              Signals Shared
             </button>
-            <button 
-              onClick={() => setActiveTab('comments')}
-              className={`flex-1 py-5 text-xs font-black uppercase tracking-[0.2em] transition-all ${activeTab === 'comments' ? 'text-indigo-400 bg-indigo-500/5' : 'text-slate-500 hover:text-slate-300'}`}
-            >
-              Recent Comments
+            <button onClick={() => setActiveTab('comments')} className={`flex-1 py-5 text-xs font-black uppercase tracking-[0.2em] transition-all ${activeTab === 'comments' ? 'text-rose-500 bg-rose-500/5' : 'text-slate-500 hover:text-slate-300'}`}>
+              Voice Records
             </button>
           </div>
 
-          <div className="p-8">
+          <div className="p-6 md:p-8">
             {activityLoading ? (
-              <div className="flex justify-center p-10">
-                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-indigo-500"></div>
-              </div>
+              <div className="flex justify-center p-10"><div className="animate-spin rounded-full h-8 w-8 border-t-2 border-rose-500"></div></div>
             ) : activeTab === 'posts' ? (
               <div className="space-y-4">
-                {indexErrors.posts ? (
-                  <div className="p-10 text-center space-y-4">
-                    <div className="bg-red-500/10 p-4 rounded-2xl border border-red-500/20 max-w-sm mx-auto">
-                      <p className="text-red-400 text-xs font-bold leading-relaxed">The Posts query requires an index. Please visit the Firebase console to create it.</p>
-                    </div>
-                  </div>
-                ) : userPosts.length === 0 ? (
-                  <p className="text-center text-slate-600 text-xs font-bold uppercase py-10">No broadcast signals found</p>
+                {userPosts.length === 0 ? (
+                  <p className="text-center text-slate-600 text-[10px] font-black uppercase py-10 tracking-widest">No active signals found</p>
                 ) : (
                   userPosts.map(post => (
-                    <div key={post.id} className="bg-slate-900/40 rounded-2xl p-5 border border-white/5 group relative animate-slideIn">
+                    <div key={post.id} className="bg-slate-900/40 rounded-2xl p-5 border border-white/5 hover:border-rose-500/20 transition-all group animate-slideIn">
                       <div className="flex justify-between items-start mb-2">
-                        <span className="text-[10px] text-slate-500 font-bold">{new Date(post.createdAt).toLocaleDateString()}</span>
-                        {(activeUser.role === 'admin' || isOwnProfile) && (
-                          <button onClick={() => handleDeletePost(post.id)} className="text-red-500/50 hover:text-red-500 transition-colors">
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                          </button>
-                        )}
+                        <span className="text-[9px] text-slate-500 font-bold uppercase tracking-widest">{new Date(post.createdAt).toLocaleDateString()}</span>
+                        {isOwnProfile && <button className="text-red-500/40 hover:text-red-500"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>}
                       </div>
                       <p className="text-sm text-slate-300 line-clamp-2 mb-3">{post.content}</p>
-                      <div className="flex items-center gap-4 text-[10px] font-black text-slate-500 uppercase">
-                         <span>👍 {post.likes?.length || 0}</span>
-                         <span>💬 {post.commentsCount || 0}</span>
-                      </div>
                     </div>
                   ))
                 )}
               </div>
             ) : (
               <div className="space-y-4">
-                {indexErrors.comments ? (
-                  <div className="p-10 text-center space-y-4">
-                    <div className="bg-red-500/10 p-4 rounded-2xl border border-red-500/20 max-w-sm mx-auto">
-                      <p className="text-red-400 text-xs font-bold leading-relaxed">The Comments query requires an index. Please visit the Firebase console to create it.</p>
-                    </div>
-                  </div>
-                ) : userComments.length === 0 ? (
-                  <p className="text-center text-slate-600 text-xs font-bold uppercase py-10">No voice recorded in the forum</p>
+                {userComments.length === 0 ? (
+                  <p className="text-center text-slate-600 text-[10px] font-black uppercase py-10 tracking-widest">Voice unheard in this sector</p>
                 ) : (
                   userComments.map(comment => (
                     <div key={comment.id} className="bg-slate-900/40 rounded-2xl p-5 border border-white/5 animate-slideIn">
                       <div className="flex justify-between items-start mb-2">
-                        <span className="text-[10px] text-slate-500 font-bold">{new Date(comment.createdAt).toLocaleDateString()}</span>
-                        <Link to="/" className="text-[9px] text-indigo-400 font-black uppercase hover:underline">View Parent Post</Link>
+                        <span className="text-[9px] text-slate-500 font-bold uppercase tracking-widest">{new Date(comment.createdAt).toLocaleDateString()}</span>
                       </div>
                       <p className="text-sm text-slate-300 italic">"{comment.text}"</p>
                     </div>
@@ -439,10 +357,6 @@ const ProfileView: React.FC<{ activeUser: User }> = ({ activeUser }) => {
           </div>
         </div>
       )}
-
-      <div className="mt-4">
-        <AdsterraAd id="profile-bottom" />
-      </div>
     </div>
   );
 };

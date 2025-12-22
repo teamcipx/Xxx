@@ -1,5 +1,6 @@
 
 export type UserRole = 'user' | 'premium' | 'pro' | 'admin';
+export type Gender = 'Male' | 'Female' | 'Other' | 'Prefer not to say';
 
 export interface User {
   uid: string;
@@ -10,11 +11,16 @@ export interface User {
   isPro: boolean;
   role: UserRole;
   joinedAt: number;
+  age?: number;
+  gender?: Gender;
+  interests?: string;
   socials?: {
     twitter?: string;
     github?: string;
     instagram?: string;
     website?: string;
+    telegram?: string;
+    facebook?: string;
   };
 }
 
