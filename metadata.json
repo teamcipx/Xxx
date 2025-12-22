@@ -1,0 +1,8 @@
+{
+  "name": "Akti Forum",
+  "description": "A high-performance community forum with image posting, AI-powered bios, real-time chat, and Binance-integrated upgrades.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
