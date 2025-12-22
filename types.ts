@@ -10,6 +10,12 @@ export interface User {
   isPro: boolean;
   role: UserRole;
   joinedAt: number;
+  socials?: {
+    twitter?: string;
+    github?: string;
+    instagram?: string;
+    website?: string;
+  };
 }
 
 export interface Post {
