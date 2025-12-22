@@ -18,6 +18,34 @@ import { doc, getDoc, collection, query, orderBy, startAt, endAt, limit, getDocs
 
 const ADMIN_EMAIL = 'rakibulislamrovin@gmail.co';
 
+const MobileBottomNav: React.FC<{ activeUser: User | null }> = ({ activeUser }) => {
+  const location = useLocation();
+  if (!activeUser) return null;
+
+  const isActive = (path: string) => location.pathname === path || (path !== '/' && location.pathname.startsWith(path));
+
+  return (
+    <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 glass-effect border-t border-white/10 px-6 py-3 flex items-center justify-between shadow-[0_-10px_20px_rgba(0,0,0,0.5)]">
+      <Link to="/" className={`flex flex-col items-center gap-1 ${isActive('/') ? 'text-indigo-400' : 'text-slate-500'}`}>
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
+        <span className="text-[8px] font-black uppercase tracking-widest">Feed</span>
+      </Link>
+      <Link to="/chat" className={`flex flex-col items-center gap-1 ${isActive('/chat') ? 'text-indigo-400' : 'text-slate-500'}`}>
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" /></svg>
+        <span className="text-[8px] font-black uppercase tracking-widest">Lobby</span>
+      </Link>
+      <Link to="/pro" className={`flex flex-col items-center gap-1 ${isActive('/pro') ? 'text-amber-400' : 'text-slate-500'}`}>
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-7.714 2.143L11 21l-2.286-6.857L1 12l7.714-2.143L11 3z" /></svg>
+        <span className="text-[8px] font-black uppercase tracking-widest">Upgrade</span>
+      </Link>
+      <Link to={`/profile/${activeUser.uid}`} className={`flex flex-col items-center gap-1 ${isActive(`/profile/${activeUser.uid}`) ? 'text-indigo-400' : 'text-slate-500'}`}>
+        <img src={activeUser.photoURL} alt="P" className={`w-6 h-6 rounded-lg object-cover border ${isActive(`/profile/${activeUser.uid}`) ? 'border-indigo-400' : 'border-transparent'}`} />
+        <span className="text-[8px] font-black uppercase tracking-widest">Profile</span>
+      </Link>
+    </div>
+  );
+};
+
 const Navbar: React.FC<{ activeUser: User | null }> = ({ activeUser }) => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -34,7 +62,6 @@ const Navbar: React.FC<{ activeUser: User | null }> = ({ activeUser }) => {
   };
 
   const handleSwitchAccount = () => {
-    // For "Many account" feature: sign out and take back to login
     handleLogout();
   };
 
@@ -109,32 +136,27 @@ const Navbar: React.FC<{ activeUser: User | null }> = ({ activeUser }) => {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search members..."
-              className="w-full bg-slate-900/60 border border-white/5 rounded-2xl pl-10 pr-4 py-2.5 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:bg-slate-900 transition-all"
+              placeholder="Find people..."
+              className="w-full bg-slate-900/60 border border-white/5 rounded-2xl pl-10 pr-4 py-2 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 transition-all"
             />
-            {isSearching && (
-              <div className="absolute inset-y-0 right-3 flex items-center">
-                <div className="animate-spin h-3 w-3 border-2 border-indigo-500 border-t-transparent rounded-full"></div>
-              </div>
-            )}
           </div>
 
           {searchResults.length > 0 && (
-            <div className="absolute top-full left-0 right-0 mt-2 bg-slate-900 border border-white/10 rounded-2xl shadow-2xl overflow-hidden animate-fadeIn backdrop-blur-xl ring-1 ring-white/5">
+            <div className="absolute top-full left-0 right-0 mt-2 bg-slate-900 border border-white/10 rounded-2xl shadow-2xl overflow-hidden animate-fadeIn backdrop-blur-xl z-50">
               <div className="p-2 space-y-1">
                 {searchResults.map((user) => (
                   <button
                     key={user.uid}
                     onClick={() => handleSelectUser(user.uid)}
-                    className="w-full flex items-center gap-3 p-2.5 hover:bg-white/5 rounded-xl transition-colors text-left group"
+                    className="w-full flex items-center gap-3 p-2.5 hover:bg-white/5 rounded-xl transition-colors text-left"
                   >
-                    <img src={user.photoURL} alt={user.displayName} className="w-9 h-9 rounded-xl object-cover bg-slate-800" />
+                    <img src={user.photoURL} alt={user.displayName} className="w-9 h-9 rounded-xl object-cover" />
                     <div>
                       <div className="flex items-center gap-2">
-                        <p className="text-sm font-bold text-slate-200 leading-none group-hover:text-indigo-400">{user.displayName}</p>
+                        <p className="text-sm font-bold text-slate-200 leading-none">{user.displayName}</p>
                         <UserBadge role={user.role} />
                       </div>
-                      <p className="text-[10px] text-slate-500 mt-1 uppercase tracking-widest font-black">View Signal</p>
+                      <p className="text-[9px] text-slate-500 mt-1 uppercase">Member Signal</p>
                     </div>
                   </button>
                 ))}
@@ -145,13 +167,13 @@ const Navbar: React.FC<{ activeUser: User | null }> = ({ activeUser }) => {
       )}
 
       {activeUser && (
-        <div className="hidden md:flex items-center gap-8 px-4">
+        <div className="hidden md:flex items-center gap-6 px-4">
           <Link to="/" className={`hover:text-indigo-400 transition-all text-xs font-black uppercase tracking-widest ${location.pathname === '/' ? 'text-indigo-400 border-b-2 border-indigo-500 pb-1' : 'text-slate-500'}`}>Feed</Link>
           <Link to="/chat" className={`hover:text-indigo-400 transition-all text-xs font-black uppercase tracking-widest ${location.pathname.startsWith('/chat') ? 'text-indigo-400 border-b-2 border-indigo-500 pb-1' : 'text-slate-500'}`}>Lobby</Link>
           {activeUser.role === 'admin' && (
-             <Link to="/admin" className={`hover:text-red-400 transition-all text-xs font-black uppercase tracking-widest ${location.pathname === '/admin' ? 'text-red-400 border-b-2 border-red-500 pb-1' : 'text-slate-500'}`}>Dashboard</Link>
+             <Link to="/admin" className={`hover:text-red-400 transition-all text-xs font-black uppercase tracking-widest ${location.pathname === '/admin' ? 'text-red-400 border-b-2 border-red-500 pb-1' : 'text-slate-500'}`}>Admin</Link>
           )}
-          <Link to="/pro" className={`hover:text-amber-400 transition-all text-xs font-black uppercase tracking-widest ${location.pathname === '/pro' ? 'text-amber-400 border-b-2 border-amber-500 pb-1' : 'text-slate-500'}`}>Upgrade</Link>
+          <Link to="/pro" className={`hover:text-amber-400 transition-all text-xs font-black uppercase tracking-widest ${location.pathname === '/pro' ? 'text-amber-400 border-b-2 border-amber-500 pb-1' : 'text-slate-500'}`}>Pro</Link>
         </div>
       )}
 
@@ -162,13 +184,10 @@ const Navbar: React.FC<{ activeUser: User | null }> = ({ activeUser }) => {
               onClick={() => setShowUserMenu(!showUserMenu)}
               className="flex items-center gap-3 bg-slate-900/80 p-1.5 pr-4 rounded-2xl border border-white/10 hover:bg-slate-800 transition-all active:scale-95 group shadow-lg"
             >
-              <div className="relative">
-                <img src={activeUser.photoURL} alt="p" className="w-9 h-9 rounded-xl object-cover" />
-                <div className={`absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full border-2 border-slate-900 ${activeUser.role !== 'user' ? 'bg-indigo-500' : 'bg-green-500'}`}></div>
-              </div>
+              <img src={activeUser.photoURL} alt="p" className="w-9 h-9 rounded-xl object-cover" />
               <div className="hidden md:block text-left">
                 <p className="font-black text-slate-200 text-xs leading-none uppercase tracking-tight">{activeUser.displayName.split(' ')[0]}</p>
-                <p className="text-slate-500 text-[9px] font-bold mt-1 uppercase">Menu</p>
+                <p className="text-slate-500 text-[9px] font-bold mt-1 uppercase">Account</p>
               </div>
             </button>
 
@@ -180,14 +199,14 @@ const Navbar: React.FC<{ activeUser: User | null }> = ({ activeUser }) => {
                 </div>
                 <Link to={`/profile/${activeUser.uid}`} onClick={() => setShowUserMenu(false)} className="flex items-center gap-3 p-3 hover:bg-white/5 rounded-xl transition-all text-slate-400 hover:text-white group">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
-                  <span className="text-xs font-black uppercase tracking-widest">My Profile</span>
+                  <span className="text-xs font-black uppercase tracking-widest">Profile</span>
                 </Link>
-                <button onClick={handleSwitchAccount} className="w-full flex items-center gap-3 p-3 hover:bg-indigo-500/10 rounded-xl transition-all text-indigo-400 group">
+                <button onClick={handleSwitchAccount} className="w-full flex items-center gap-3 p-3 hover:bg-indigo-500/10 rounded-xl transition-all text-indigo-400 group text-left">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /></svg>
-                  <span className="text-xs font-black uppercase tracking-widest">Switch Account</span>
+                  <span className="text-xs font-black uppercase tracking-widest">Switch Identity</span>
                 </button>
                 <div className="h-px bg-white/5 my-1"></div>
-                <button onClick={handleLogout} className="w-full flex items-center gap-3 p-3 hover:bg-red-500/10 rounded-xl transition-all text-red-500">
+                <button onClick={handleLogout} className="w-full flex items-center gap-3 p-3 hover:bg-red-500/10 rounded-xl transition-all text-red-500 text-left">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
                   <span className="text-xs font-black uppercase tracking-widest">Logout</span>
                 </button>
@@ -195,7 +214,7 @@ const Navbar: React.FC<{ activeUser: User | null }> = ({ activeUser }) => {
             )}
           </div>
         ) : (
-          <Link to="/auth" className="bg-indigo-600 hover:bg-indigo-500 px-6 py-2.5 rounded-2xl text-xs font-black uppercase tracking-widest shadow-lg shadow-indigo-600/30 transition-all hover:scale-105 active:scale-95">Auth Required</Link>
+          <Link to="/auth" className="bg-indigo-600 hover:bg-indigo-500 px-6 py-2.5 rounded-2xl text-xs font-black uppercase tracking-widest shadow-lg shadow-indigo-600/30 transition-all hover:scale-105 active:scale-95">Login</Link>
         )}
       </div>
     </nav>
@@ -209,22 +228,25 @@ const App: React.FC = () => {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
-        const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
-        if (userDoc.exists()) {
-          setCurrentUser(userDoc.data() as User);
-        } else {
-          // If the email matches the hardcoded admin email, assign admin role immediately
-          const isAdmin = firebaseUser.email === ADMIN_EMAIL;
-          setCurrentUser({
-            uid: firebaseUser.uid,
-            displayName: firebaseUser.displayName || 'Anonymous Signal',
-            email: firebaseUser.email || '',
-            photoURL: firebaseUser.photoURL || `https://ui-avatars.com/api/?name=${firebaseUser.displayName || 'U'}&background=random`,
-            bio: '',
-            isPro: isAdmin,
-            role: isAdmin ? 'admin' : 'user',
-            joinedAt: Date.now()
-          });
+        try {
+          const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
+          if (userDoc.exists()) {
+            setCurrentUser(userDoc.data() as User);
+          } else {
+            const isAdmin = firebaseUser.email === ADMIN_EMAIL;
+            setCurrentUser({
+              uid: firebaseUser.uid,
+              displayName: firebaseUser.displayName || 'Entity_' + Math.floor(Math.random() * 1000),
+              email: firebaseUser.email || '',
+              photoURL: firebaseUser.photoURL || `https://ui-avatars.com/api/?name=${firebaseUser.displayName || 'U'}&background=random`,
+              bio: '',
+              isPro: isAdmin,
+              role: isAdmin ? 'admin' : 'user',
+              joinedAt: Date.now()
+            });
+          }
+        } catch (e) {
+          console.error("Auth sync error:", e);
         }
       } else {
         setCurrentUser(null);
@@ -237,14 +259,8 @@ const App: React.FC = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center gap-8">
-        <div className="relative">
-          <div className="bg-indigo-600 text-white w-20 h-20 rounded-[2.5rem] font-black text-4xl flex items-center justify-center animate-bounce shadow-2xl shadow-indigo-600/50">A</div>
-          <div className="absolute -inset-4 bg-indigo-500/20 rounded-full blur-2xl animate-pulse"></div>
-        </div>
-        <div className="flex flex-col items-center gap-2">
-           <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-indigo-500 border-b-2 border-transparent"></div>
-           <p className="text-slate-600 text-[10px] font-black uppercase tracking-[0.4em]">Syncing Signal</p>
-        </div>
+        <div className="bg-indigo-600 text-white w-20 h-20 rounded-[2.5rem] font-black text-4xl flex items-center justify-center animate-bounce shadow-2xl shadow-indigo-600/50">A</div>
+        <p className="text-slate-600 text-[10px] font-black uppercase tracking-[0.4em] animate-pulse">Establishing Connection</p>
       </div>
     );
   }
@@ -255,11 +271,7 @@ const App: React.FC = () => {
       <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col selection:bg-indigo-500/30 overflow-x-hidden">
         <Navbar activeUser={currentUser} />
         
-        <main className="flex-1 container mx-auto max-w-5xl px-4 py-8">
-          <div className="mb-8">
-            <AdsterraAd id="top-global" />
-          </div>
-          
+        <main className="flex-1 container mx-auto max-w-5xl px-4 py-8 mb-20 md:mb-0">
           <Routes>
             <Route path="/" element={currentUser ? <FeedView user={currentUser} /> : <Navigate to="/auth" />} />
             <Route path="/auth" element={!currentUser ? <AuthView /> : <Navigate to="/" />} />
@@ -272,17 +284,13 @@ const App: React.FC = () => {
           </Routes>
         </main>
 
+        <MobileBottomNav activeUser={currentUser} />
         <SupportWidget />
         
-        <footer className="mt-auto py-16 border-t border-white/5 bg-slate-900/10">
+        <footer className="mt-auto py-12 border-t border-white/5 bg-slate-900/10 hidden md:block">
           <div className="container mx-auto px-4 text-center">
-            <div className="flex justify-center gap-8 mb-8">
-              <Link to="/pro" className="text-xs font-black text-slate-500 hover:text-amber-500 uppercase tracking-widest transition-colors">Premium</Link>
-              <Link to="/chat" className="text-xs font-black text-slate-500 hover:text-indigo-400 uppercase tracking-widest transition-colors">Community</Link>
-              <a href="#" className="text-xs font-black text-slate-500 hover:text-white uppercase tracking-widest transition-colors">Privacy</a>
-            </div>
             <p className="text-slate-700 text-[10px] font-black uppercase tracking-widest">
-              Akti Forum Infrastructure &bull; &copy; {new Date().getFullYear()} &bull; Built for Performance
+              Akti Forum &bull; &copy; {new Date().getFullYear()} &bull; Performance Core
             </p>
           </div>
         </footer>
