@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { HashRouter as Router, Routes, Route, Link, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { User, UserRole } from './types';
@@ -11,9 +12,10 @@ import ChatView from './views/ChatView';
 import UpgradeView from './views/UpgradeView';
 import AuthView from './views/AuthView';
 import AdminView from './views/AdminView';
+import MaintenanceView from './views/MaintenanceView';
 import { auth, db } from './services/firebase';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
-import { doc, getDoc, collection, query, orderBy, startAt, endAt, limit, getDocs, updateDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, collection, query, orderBy, startAt, endAt, limit, getDocs, updateDoc, setDoc, onSnapshot } from 'firebase/firestore';
 
 const ADMIN_EMAIL = 'rakibulislamrovin@gmail.com';
 
@@ -175,9 +177,18 @@ const Navbar: React.FC<{ activeUser: User | null }> = ({ activeUser }) => {
 const App: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [maintenanceMode, setMaintenanceMode] = useState(false);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+    // Listen for global site settings
+    const siteSettingsRef = doc(db, 'settings', 'site');
+    const unsubscribeSettings = onSnapshot(siteSettingsRef, (doc) => {
+      if (doc.exists()) {
+        setMaintenanceMode(doc.data().maintenanceMode || false);
+      }
+    });
+
+    const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         try {
           const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
@@ -210,7 +221,11 @@ const App: React.FC = () => {
       } else { setCurrentUser(null); }
       setLoading(false);
     });
-    return unsubscribe;
+    
+    return () => {
+      unsubscribeSettings();
+      unsubscribeAuth();
+    };
   }, []);
 
   if (loading) return (
@@ -220,6 +235,11 @@ const App: React.FC = () => {
     </div>
   );
 
+  // If maintenance mode is on and user is NOT admin, show maintenance page
+  if (maintenanceMode && currentUser?.role !== 'admin') {
+    return <MaintenanceView />;
+  }
+
   return (
     <Router>
       <SocialBarAd />
@@ -227,7 +247,6 @@ const App: React.FC = () => {
         <Navbar activeUser={currentUser} />
         
         <div className="flex-1 flex flex-col lg:flex-row container mx-auto max-w-screen-xl px-2 md:px-4 py-6 gap-6 mb-20 md:mb-0">
-          {/* Main Content Area */}
           <main className="flex-1 min-w-0">
             <Routes>
               <Route path="/" element={currentUser ? <FeedView user={currentUser} /> : <Navigate to="/auth" />} />
@@ -241,7 +260,6 @@ const App: React.FC = () => {
             </Routes>
           </main>
 
-          {/* Desktop Right Ad Sidebar */}
           {currentUser && (
             <aside className="hidden lg:block w-72 flex-shrink-0 space-y-6">
               <div className="sticky top-24 space-y-6">

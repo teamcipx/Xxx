@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { User, UserRole, Post, Comment, Transaction } from '../types';
 import { db } from '../services/firebase';
@@ -11,11 +12,12 @@ import {
   limit, 
   getCountFromServer,
   deleteDoc,
-  onSnapshot
+  onSnapshot,
+  setDoc
 } from 'firebase/firestore';
 import { UserBadge } from '../components/UserBadge';
 
-type AdminTab = 'overview' | 'users' | 'payments' | 'moderation' | 'analytics';
+type AdminTab = 'overview' | 'users' | 'payments' | 'moderation' | 'settings';
 
 const AdminView: React.FC<{ activeUser: User }> = ({ activeUser }) => {
   const [activeTab, setActiveTab] = useState<AdminTab>('overview');
@@ -23,6 +25,7 @@ const AdminView: React.FC<{ activeUser: User }> = ({ activeUser }) => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [recentPosts, setRecentPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
+  const [maintenanceMode, setMaintenanceMode] = useState(false);
   const [stats, setStats] = useState({ 
     totalUsers: 0, 
     proUsers: 0, 
@@ -32,11 +35,24 @@ const AdminView: React.FC<{ activeUser: User }> = ({ activeUser }) => {
 
   useEffect(() => {
     fetchStats();
+    
+    // Listen for site settings
+    const siteSettingsRef = doc(db, 'settings', 'site');
+    const unsubscribeSettings = onSnapshot(siteSettingsRef, (doc) => {
+      if (doc.exists()) {
+        setMaintenanceMode(doc.data().maintenanceMode || false);
+      }
+    });
+
     const tQ = query(collection(db, 'transactions'), orderBy('createdAt', 'desc'));
-    const unsubscribe = onSnapshot(tQ, (snapshot) => {
+    const unsubscribeTx = onSnapshot(tQ, (snapshot) => {
       setTransactions(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Transaction)));
     });
-    return unsubscribe;
+
+    return () => {
+      unsubscribeSettings();
+      unsubscribeTx();
+    };
   }, []);
 
   const fetchStats = async () => {
@@ -63,18 +79,28 @@ const AdminView: React.FC<{ activeUser: User }> = ({ activeUser }) => {
     } catch (err) { console.error(err); } finally { setLoading(false); }
   };
 
+  const toggleMaintenance = async () => {
+    const newValue = !maintenanceMode;
+    try {
+      await setDoc(doc(db, 'settings', 'site'), { maintenanceMode: newValue }, { merge: true });
+      setMaintenanceMode(newValue);
+    } catch (err) {
+      alert("Failed to update site settings.");
+    }
+  };
+
   const sidebarItems = [
     { id: 'overview', label: 'Stats', icon: 'M13 7h8m0 0v8m0-8l-8 8-4-4-6 6' },
     { id: 'users', label: 'Members', icon: 'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z' },
     { id: 'payments', label: 'Cashier', icon: 'M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z' },
     { id: 'moderation', label: 'Police', icon: 'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z' },
+    { id: 'settings', label: 'Settings', icon: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z' },
   ];
 
   if (loading) return <div className="py-20 text-center text-[10px] font-black uppercase tracking-widest text-slate-500">Accessing Dashboard...</div>;
 
   return (
     <div className="flex flex-col lg:flex-row gap-6">
-      {/* Tab Navigation - Scrollable on Mobile */}
       <div className="lg:w-48 flex-shrink-0">
         <div className="flex lg:flex-col overflow-x-auto lg:overflow-x-visible pb-2 lg:pb-0 gap-2 custom-scrollbar lg:sticky lg:top-24">
           {sidebarItems.map((item) => (
@@ -104,6 +130,36 @@ const AdminView: React.FC<{ activeUser: User }> = ({ activeUser }) => {
                 <p className={`text-xl font-black ${s.c}`}>{s.v}</p>
               </div>
             ))}
+          </div>
+        )}
+
+        {activeTab === 'settings' && (
+          <div className="glass-effect p-8 rounded-[2rem] border border-white/5 space-y-8 animate-fadeIn">
+            <div>
+              <h3 className="text-xl font-black text-white uppercase tracking-tight mb-2">Network Control</h3>
+              <p className="text-slate-500 text-xs font-medium">Manage global forum states and core functionality.</p>
+            </div>
+            
+            <div className="bg-slate-900/40 p-6 rounded-2xl border border-white/5 flex items-center justify-between">
+              <div>
+                <p className="text-sm font-black text-slate-200 uppercase">Maintenance Mode</p>
+                <p className="text-[10px] text-slate-500 font-medium mt-1">When active, only admins can access the forum.</p>
+              </div>
+              <button 
+                onClick={toggleMaintenance}
+                className={`w-14 h-8 rounded-full p-1 transition-all duration-300 ${maintenanceMode ? 'bg-indigo-600' : 'bg-slate-800'}`}
+              >
+                <div className={`w-6 h-6 bg-white rounded-full shadow-lg transform transition-transform duration-300 ${maintenanceMode ? 'translate-x-6' : 'translate-x-0'}`}></div>
+              </button>
+            </div>
+
+            {maintenanceMode && (
+              <div className="bg-amber-500/10 p-4 rounded-xl border border-amber-500/20">
+                <p className="text-[10px] text-amber-500 font-bold uppercase tracking-widest leading-relaxed">
+                  Warning: The forum is currently invisible to all citizens.
+                </p>
+              </div>
+            )}
           </div>
         )}
 
