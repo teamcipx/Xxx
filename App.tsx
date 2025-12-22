@@ -16,7 +16,8 @@ import { auth, db } from './services/firebase';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { doc, getDoc, collection, query, orderBy, startAt, endAt, limit, getDocs } from 'firebase/firestore';
 
-const ADMIN_EMAIL = 'rakibulislamrovin@gmail.co';
+// Fixed the typo from .co to .com
+const ADMIN_EMAIL = 'rakibulislamrovin@gmail.com';
 
 const MobileBottomNav: React.FC<{ activeUser: User | null }> = ({ activeUser }) => {
   const location = useLocation();
@@ -25,22 +26,28 @@ const MobileBottomNav: React.FC<{ activeUser: User | null }> = ({ activeUser }) 
   const isActive = (path: string) => location.pathname === path || (path !== '/' && location.pathname.startsWith(path));
 
   return (
-    <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 glass-effect border-t border-white/10 px-6 py-3 flex items-center justify-between shadow-[0_-10px_20px_rgba(0,0,0,0.5)]">
+    <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 glass-effect border-t border-white/10 px-4 py-3 flex items-center justify-between shadow-[0_-10px_20px_rgba(0,0,0,0.5)]">
       <Link to="/" className={`flex flex-col items-center gap-1 ${isActive('/') ? 'text-indigo-400' : 'text-slate-500'}`}>
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
-        <span className="text-[8px] font-black uppercase tracking-widest">Feed</span>
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
+        <span className="text-[7px] font-black uppercase tracking-widest">Feed</span>
       </Link>
       <Link to="/chat" className={`flex flex-col items-center gap-1 ${isActive('/chat') ? 'text-indigo-400' : 'text-slate-500'}`}>
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" /></svg>
-        <span className="text-[8px] font-black uppercase tracking-widest">Lobby</span>
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
+        <span className="text-[7px] font-black uppercase tracking-widest">Lobby</span>
       </Link>
+      {activeUser.role === 'admin' && (
+        <Link to="/admin" className={`flex flex-col items-center gap-1 ${isActive('/admin') ? 'text-red-400' : 'text-slate-500'}`}>
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
+          <span className="text-[7px] font-black uppercase tracking-widest">Admin</span>
+        </Link>
+      )}
       <Link to="/pro" className={`flex flex-col items-center gap-1 ${isActive('/pro') ? 'text-amber-400' : 'text-slate-500'}`}>
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-7.714 2.143L11 21l-2.286-6.857L1 12l7.714-2.143L11 3z" /></svg>
-        <span className="text-[8px] font-black uppercase tracking-widest">Upgrade</span>
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-7.714 2.143L11 21l-2.286-6.857L1 12l7.714-2.143L11 3z" /></svg>
+        <span className="text-[7px] font-black uppercase tracking-widest">Pro</span>
       </Link>
       <Link to={`/profile/${activeUser.uid}`} className={`flex flex-col items-center gap-1 ${isActive(`/profile/${activeUser.uid}`) ? 'text-indigo-400' : 'text-slate-500'}`}>
-        <img src={activeUser.photoURL} alt="P" className={`w-6 h-6 rounded-lg object-cover border ${isActive(`/profile/${activeUser.uid}`) ? 'border-indigo-400' : 'border-transparent'}`} />
-        <span className="text-[8px] font-black uppercase tracking-widest">Profile</span>
+        <img src={activeUser.photoURL} alt="P" className={`w-5 h-5 rounded-lg object-cover border ${isActive(`/profile/${activeUser.uid}`) ? 'border-indigo-400' : 'border-transparent'}`} />
+        <span className="text-[7px] font-black uppercase tracking-widest">Profile</span>
       </Link>
     </div>
   );
@@ -230,16 +237,23 @@ const App: React.FC = () => {
       if (firebaseUser) {
         try {
           const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
+          const isAdmin = firebaseUser.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase();
+          
           if (userDoc.exists()) {
-            setCurrentUser(userDoc.data() as User);
+            const data = userDoc.data() as User;
+            // Force admin role if email matches, even if DB is outdated
+            if (isAdmin && data.role !== 'admin') {
+              setCurrentUser({ ...data, role: 'admin', isPro: true });
+            } else {
+              setCurrentUser(data);
+            }
           } else {
-            const isAdmin = firebaseUser.email === ADMIN_EMAIL;
             setCurrentUser({
               uid: firebaseUser.uid,
               displayName: firebaseUser.displayName || 'Entity_' + Math.floor(Math.random() * 1000),
               email: firebaseUser.email || '',
               photoURL: firebaseUser.photoURL || `https://ui-avatars.com/api/?name=${firebaseUser.displayName || 'U'}&background=random`,
-              bio: '',
+              bio: isAdmin ? 'Master Administrator' : '',
               isPro: isAdmin,
               role: isAdmin ? 'admin' : 'user',
               joinedAt: Date.now()

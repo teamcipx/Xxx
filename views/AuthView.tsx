@@ -6,7 +6,7 @@ import { doc, setDoc } from 'firebase/firestore';
 import { AdsterraAd } from '../components/AdsterraAd';
 import { User } from '../types';
 
-const ADMIN_EMAIL = 'rakibulislamrovin@gmail.co';
+const ADMIN_EMAIL = 'rakibulislamrovin@gmail.com';
 
 const AuthView: React.FC = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -54,13 +54,11 @@ const AuthView: React.FC = () => {
 
   return (
     <div className="max-w-md mx-auto mt-4 animate-fadeIn">
-      {/* Top Ad for Login/Signup */}
       <div className="mb-6">
         <AdsterraAd id="auth-top" />
       </div>
 
       <div className="glass-effect rounded-[2.5rem] p-10 border border-white/10 shadow-2xl relative overflow-hidden">
-        {/* Decorative elements */}
         <div className="absolute -top-24 -right-24 w-48 h-48 bg-indigo-600/10 rounded-full blur-3xl"></div>
         <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-purple-600/10 rounded-full blur-3xl"></div>
 
@@ -137,7 +135,6 @@ const AuthView: React.FC = () => {
         </div>
       </div>
 
-      {/* Bottom Ad for Login/Signup */}
       <div className="mt-8">
         <AdsterraAd id="auth-bottom" />
       </div>
