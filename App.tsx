@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { HashRouter as Router, Routes, Route, Link, useNavigate, useLocation, Navigate } from 'react-router-dom';
-import { User } from './types';
+import { User, UserRole } from './types';
 import { SupportWidget } from './components/SupportWidget';
 import { AdsterraAd } from './components/AdsterraAd';
 import { SocialBarAd } from './components/SocialBarAd';
@@ -14,9 +14,9 @@ import AuthView from './views/AuthView';
 import AdminView from './views/AdminView';
 import { auth, db } from './services/firebase';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
-import { doc, getDoc, collection, query, orderBy, startAt, endAt, limit, getDocs } from 'firebase/firestore';
+import { doc, getDoc, collection, query, orderBy, startAt, endAt, limit, getDocs, updateDoc, setDoc } from 'firebase/firestore';
 
-// Fixed the typo from .co to .com
+// The designated Master Admin email - MUST be exactly this
 const ADMIN_EMAIL = 'rakibulislamrovin@gmail.com';
 
 const MobileBottomNav: React.FC<{ activeUser: User | null }> = ({ activeUser }) => {
@@ -58,7 +58,6 @@ const Navbar: React.FC<{ activeUser: User | null }> = ({ activeUser }) => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<User[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -68,18 +67,12 @@ const Navbar: React.FC<{ activeUser: User | null }> = ({ activeUser }) => {
     navigate('/auth');
   };
 
-  const handleSwitchAccount = () => {
-    handleLogout();
-  };
-
   useEffect(() => {
     const performSearch = async () => {
       if (searchQuery.trim().length < 2) {
         setSearchResults([]);
         return;
       }
-
-      setIsSearching(true);
       try {
         const q = query(
           collection(db, 'users'),
@@ -93,11 +86,8 @@ const Navbar: React.FC<{ activeUser: User | null }> = ({ activeUser }) => {
         setSearchResults(users);
       } catch (error) {
         console.error("Search error:", error);
-      } finally {
-        setIsSearching(false);
       }
     };
-
     const timeoutId = setTimeout(performSearch, 300);
     return () => clearTimeout(timeoutId);
   }, [searchQuery]);
@@ -194,7 +184,7 @@ const Navbar: React.FC<{ activeUser: User | null }> = ({ activeUser }) => {
               <img src={activeUser.photoURL} alt="p" className="w-9 h-9 rounded-xl object-cover" />
               <div className="hidden md:block text-left">
                 <p className="font-black text-slate-200 text-xs leading-none uppercase tracking-tight">{activeUser.displayName.split(' ')[0]}</p>
-                <p className="text-slate-500 text-[9px] font-bold mt-1 uppercase">Account</p>
+                <p className="text-slate-500 text-[9px] font-bold mt-1 uppercase">{activeUser.role}</p>
               </div>
             </button>
 
@@ -208,10 +198,12 @@ const Navbar: React.FC<{ activeUser: User | null }> = ({ activeUser }) => {
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
                   <span className="text-xs font-black uppercase tracking-widest">Profile</span>
                 </Link>
-                <button onClick={handleSwitchAccount} className="w-full flex items-center gap-3 p-3 hover:bg-indigo-500/10 rounded-xl transition-all text-indigo-400 group text-left">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /></svg>
-                  <span className="text-xs font-black uppercase tracking-widest">Switch Identity</span>
-                </button>
+                {activeUser.role === 'admin' && (
+                  <Link to="/admin" onClick={() => setShowUserMenu(false)} className="flex items-center gap-3 p-3 hover:bg-red-500/10 rounded-xl transition-all text-red-400 group">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
+                    <span className="text-xs font-black uppercase tracking-widest font-black">Admin Panel</span>
+                  </Link>
+                )}
                 <div className="h-px bg-white/5 my-1"></div>
                 <button onClick={handleLogout} className="w-full flex items-center gap-3 p-3 hover:bg-red-500/10 rounded-xl transition-all text-red-500 text-left">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
@@ -243,21 +235,27 @@ const App: React.FC = () => {
             const data = userDoc.data() as User;
             // Force admin role if email matches, even if DB is outdated
             if (isAdmin && data.role !== 'admin') {
-              setCurrentUser({ ...data, role: 'admin', isPro: true });
+              const forcedAdmin = { ...data, role: 'admin' as UserRole, isPro: true };
+              setCurrentUser(forcedAdmin);
+              // Update firestore to keep it permanent
+              await updateDoc(doc(db, 'users', firebaseUser.uid), { role: 'admin', isPro: true });
             } else {
               setCurrentUser(data);
             }
           } else {
-            setCurrentUser({
+            // New user registration
+            const newUser: User = {
               uid: firebaseUser.uid,
               displayName: firebaseUser.displayName || 'Entity_' + Math.floor(Math.random() * 1000),
               email: firebaseUser.email || '',
-              photoURL: firebaseUser.photoURL || `https://ui-avatars.com/api/?name=${firebaseUser.displayName || 'U'}&background=random`,
-              bio: isAdmin ? 'Master Administrator' : '',
+              photoURL: firebaseUser.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(firebaseUser.displayName || 'U')}&background=random`,
+              bio: isAdmin ? 'Master Administrator' : 'New Citizen of Akti Forum',
               isPro: isAdmin,
               role: isAdmin ? 'admin' : 'user',
               joinedAt: Date.now()
-            });
+            };
+            setCurrentUser(newUser);
+            await setDoc(doc(db, 'users', firebaseUser.uid), newUser);
           }
         } catch (e) {
           console.error("Auth sync error:", e);
