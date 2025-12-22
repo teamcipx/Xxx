@@ -24,7 +24,7 @@ const ProfileView: React.FC<{ activeUser: User }> = ({ activeUser }) => {
   const [userPosts, setUserPosts] = useState<Post[]>([]);
   const [userComments, setUserComments] = useState<Comment[]>([]);
   const [activityLoading, setActivityLoading] = useState(false);
-  const [activityError, setActivityError] = useState<string | null>(null);
+  const [indexErrors, setIndexErrors] = useState<{ posts?: boolean; comments?: boolean }>({});
 
   const canSeeActivity = isOwnProfile || activeUser.role === 'admin';
 
@@ -52,9 +52,10 @@ const ProfileView: React.FC<{ activeUser: User }> = ({ activeUser }) => {
 
   const fetchActivity = async () => {
     setActivityLoading(true);
-    setActivityError(null);
+    setIndexErrors({});
+    
+    // Fetch Posts
     try {
-      // Fetch Posts
       const postsQ = query(
         collection(db, 'posts'),
         where('authorId', '==', targetUid),
@@ -63,8 +64,15 @@ const ProfileView: React.FC<{ activeUser: User }> = ({ activeUser }) => {
       );
       const postsSnap = await getDocs(postsQ);
       setUserPosts(postsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post)));
+    } catch (err: any) {
+      console.error("Posts Fetch Error:", err);
+      if (err.code === 'failed-precondition') {
+        setIndexErrors(prev => ({ ...prev, posts: true }));
+      }
+    }
 
-      // Fetch Comments
+    // Fetch Comments
+    try {
       const commentsQ = query(
         collection(db, 'comments'),
         where('authorId', '==', targetUid),
@@ -74,15 +82,13 @@ const ProfileView: React.FC<{ activeUser: User }> = ({ activeUser }) => {
       const commentsSnap = await getDocs(commentsQ);
       setUserComments(commentsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Comment)));
     } catch (err: any) {
-      console.error("Error fetching activity:", err);
+      console.error("Comments Fetch Error:", err);
       if (err.code === 'failed-precondition') {
-        setActivityError("A database index is required for this view. Please follow the instructions in the administrator console.");
-      } else {
-        setActivityError("Unable to load activity signals at this time.");
+        setIndexErrors(prev => ({ ...prev, comments: true }));
       }
-    } finally {
-      setActivityLoading(false);
     }
+
+    setActivityLoading(false);
   };
 
   const handleGenerateBio = async () => {
@@ -242,29 +248,29 @@ const ProfileView: React.FC<{ activeUser: User }> = ({ activeUser }) => {
               <div className="flex justify-center p-10">
                 <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-indigo-500"></div>
               </div>
-            ) : activityError ? (
-              <div className="p-10 text-center space-y-4">
-                 <div className="bg-red-500/10 p-4 rounded-2xl border border-red-500/20 max-w-sm mx-auto">
-                    <p className="text-red-400 text-xs font-bold">{activityError}</p>
-                 </div>
-                 {activeUser.role === 'admin' && (
-                    <a 
-                      href="https://console.firebase.google.com/v1/r/project/usersss-369bb/firestore/indexes?create_composite=Cktwcm9qZWN0cy91c2Vyc3NzLTM2OWJiL2RhdGFiYXNlcy8oZGVmYXVsdCkvY29sbGVjdGlvbkdyb3Vwcy9wb3N0cy9pbmRleGVzL18QARoMCghhdXRob3JJZBABGg0KCWNyZWF0ZWRBdBACGgwKCF9fbmFtZV9fEAI"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-block text-[10px] font-black uppercase tracking-widest text-indigo-400 hover:text-indigo-300 underline"
-                    >
-                      Click to create required Firestore index
-                    </a>
-                 )}
-              </div>
             ) : activeTab === 'posts' ? (
               <div className="space-y-4">
-                {userPosts.length === 0 ? (
+                {indexErrors.posts ? (
+                  <div className="p-10 text-center space-y-4">
+                    <div className="bg-red-500/10 p-4 rounded-2xl border border-red-500/20 max-w-sm mx-auto">
+                      <p className="text-red-400 text-xs font-bold leading-relaxed">The Posts query requires an index. Please visit the Firebase console to create it.</p>
+                    </div>
+                    {activeUser.role === 'admin' && (
+                      <a 
+                        href="https://console.firebase.google.com/v1/r/project/usersss-369bb/firestore/indexes?create_composite=Cktwcm9qZWN0cy91c2Vyc3NzLTM2OWJiL2RhdGFiYXNlcy8oZGVmYXVsdCkvY29sbGVjdGlvbkdyb3Vwcy9wb3N0cy9pbmRleGVzL18QARoMCghhdXRob3JJZBABGg0KCWNyZWF0ZWRBdBACGgwKCF9fbmFtZV9fEAI"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-block text-[10px] font-black uppercase tracking-widest text-indigo-400 hover:text-indigo-300 underline"
+                      >
+                        Create Posts Index
+                      </a>
+                    )}
+                  </div>
+                ) : userPosts.length === 0 ? (
                   <p className="text-center text-slate-600 text-xs font-bold uppercase py-10">No broadcast signals found</p>
                 ) : (
                   userPosts.map(post => (
-                    <div key={post.id} className="bg-slate-900/40 rounded-2xl p-5 border border-white/5 group relative">
+                    <div key={post.id} className="bg-slate-900/40 rounded-2xl p-5 border border-white/5 group relative animate-slideIn">
                       <div className="flex justify-between items-start mb-2">
                         <span className="text-[10px] text-slate-500 font-bold">{new Date(post.createdAt).toLocaleDateString()}</span>
                         {activeUser.role === 'admin' && (
@@ -284,11 +290,27 @@ const ProfileView: React.FC<{ activeUser: User }> = ({ activeUser }) => {
               </div>
             ) : (
               <div className="space-y-4">
-                {userComments.length === 0 ? (
+                {indexErrors.comments ? (
+                  <div className="p-10 text-center space-y-4">
+                    <div className="bg-red-500/10 p-4 rounded-2xl border border-red-500/20 max-w-sm mx-auto">
+                      <p className="text-red-400 text-xs font-bold leading-relaxed">The Comments query requires an index. Please visit the Firebase console to create it.</p>
+                    </div>
+                    {activeUser.role === 'admin' && (
+                      <a 
+                        href="https://console.firebase.google.com/v1/r/project/usersss-369bb/firestore/indexes?create_composite=Ck5wcm9qZWN0cy91c2Vyc3NzLTM2OWJiL2RhdGFiYXNlcy8oZGVmYXVsdCkvY29sbGVjdGlvbkdyb3Vwcy9jb21tZW50cy9pbmRleGVzL18QARoMCghhdXRob3JJZBABGg0KCWNyZWF0ZWRBdBACGgwKCF9fbmFtZV9fEAI"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-block text-[10px] font-black uppercase tracking-widest text-indigo-400 hover:text-indigo-300 underline"
+                      >
+                        Create Comments Index
+                      </a>
+                    )}
+                  </div>
+                ) : userComments.length === 0 ? (
                   <p className="text-center text-slate-600 text-xs font-bold uppercase py-10">No voice recorded in the forum</p>
                 ) : (
                   userComments.map(comment => (
-                    <div key={comment.id} className="bg-slate-900/40 rounded-2xl p-5 border border-white/5">
+                    <div key={comment.id} className="bg-slate-900/40 rounded-2xl p-5 border border-white/5 animate-slideIn">
                       <div className="flex justify-between items-start mb-2">
                         <span className="text-[10px] text-slate-500 font-bold">{new Date(comment.createdAt).toLocaleDateString()}</span>
                         <Link to="/" className="text-[9px] text-indigo-400 font-black uppercase hover:underline">View Parent Post</Link>
