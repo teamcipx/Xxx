@@ -14,7 +14,7 @@ import AuthView from './views/AuthView';
 import AdminView from './views/AdminView';
 import { auth, db } from './services/firebase';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
-import { doc, getDoc, collection, query, where, orderBy, startAt, endAt, limit, getDocs } from 'firebase/firestore';
+import { doc, getDoc, collection, query, orderBy, startAt, endAt, limit, getDocs } from 'firebase/firestore';
 
 const ADMIN_EMAIL = 'rakibulislamrovin@gmail.co';
 
@@ -24,11 +24,18 @@ const Navbar: React.FC<{ activeUser: User | null }> = ({ activeUser }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<User[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   const handleLogout = async () => {
     await signOut(auth);
-    navigate('/');
+    navigate('/auth');
+  };
+
+  const handleSwitchAccount = () => {
+    // For "Many account" feature: sign out and take back to login
+    handleLogout();
   };
 
   useEffect(() => {
@@ -67,6 +74,9 @@ const Navbar: React.FC<{ activeUser: User | null }> = ({ activeUser }) => {
         setSearchQuery('');
         setSearchResults([]);
       }
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setShowUserMenu(false);
+      }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
@@ -81,9 +91,9 @@ const Navbar: React.FC<{ activeUser: User | null }> = ({ activeUser }) => {
   return (
     <nav className="sticky top-0 z-40 glass-effect border-b border-white/10 px-4 py-3 flex items-center justify-between gap-4">
       <div className="flex items-center gap-2 flex-shrink-0">
-        <Link to="/" className="flex items-center gap-2">
-          <div className="bg-indigo-600 text-white p-2 rounded-lg font-bold text-xl tracking-tighter shadow-lg shadow-indigo-600/20">A</div>
-          <span className="font-bold text-lg hidden lg:block tracking-tight">Akti Forum</span>
+        <Link to="/" className="flex items-center gap-2 group">
+          <div className="bg-indigo-600 text-white p-2.5 rounded-xl font-black text-xl tracking-tighter shadow-lg shadow-indigo-600/30 group-hover:scale-110 transition-transform">A</div>
+          <span className="font-black text-lg hidden lg:block tracking-tight text-white uppercase">Akti <span className="text-indigo-500">Forum</span></span>
         </Link>
       </div>
 
@@ -100,7 +110,7 @@ const Navbar: React.FC<{ activeUser: User | null }> = ({ activeUser }) => {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search members..."
-              className="w-full bg-slate-900/50 border border-white/5 rounded-xl pl-10 pr-4 py-2 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:bg-slate-900 transition-all"
+              className="w-full bg-slate-900/60 border border-white/5 rounded-2xl pl-10 pr-4 py-2.5 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:bg-slate-900 transition-all"
             />
             {isSearching && (
               <div className="absolute inset-y-0 right-3 flex items-center">
@@ -110,21 +120,21 @@ const Navbar: React.FC<{ activeUser: User | null }> = ({ activeUser }) => {
           </div>
 
           {searchResults.length > 0 && (
-            <div className="absolute top-full left-0 right-0 mt-2 bg-slate-900 border border-white/10 rounded-2xl shadow-2xl overflow-hidden animate-fadeIn backdrop-blur-xl">
+            <div className="absolute top-full left-0 right-0 mt-2 bg-slate-900 border border-white/10 rounded-2xl shadow-2xl overflow-hidden animate-fadeIn backdrop-blur-xl ring-1 ring-white/5">
               <div className="p-2 space-y-1">
                 {searchResults.map((user) => (
                   <button
                     key={user.uid}
                     onClick={() => handleSelectUser(user.uid)}
-                    className="w-full flex items-center gap-3 p-2 hover:bg-white/5 rounded-xl transition-colors text-left"
+                    className="w-full flex items-center gap-3 p-2.5 hover:bg-white/5 rounded-xl transition-colors text-left group"
                   >
-                    <img src={user.photoURL} alt={user.displayName} className="w-8 h-8 rounded-lg object-cover bg-slate-800" />
+                    <img src={user.photoURL} alt={user.displayName} className="w-9 h-9 rounded-xl object-cover bg-slate-800" />
                     <div>
                       <div className="flex items-center gap-2">
-                        <p className="text-sm font-bold text-slate-200 leading-none">{user.displayName}</p>
+                        <p className="text-sm font-bold text-slate-200 leading-none group-hover:text-indigo-400">{user.displayName}</p>
                         <UserBadge role={user.role} />
                       </div>
-                      <p className="text-[10px] text-slate-500 mt-1 uppercase tracking-wider">View Profile</p>
+                      <p className="text-[10px] text-slate-500 mt-1 uppercase tracking-widest font-black">View Signal</p>
                     </div>
                   </button>
                 ))}
@@ -135,40 +145,57 @@ const Navbar: React.FC<{ activeUser: User | null }> = ({ activeUser }) => {
       )}
 
       {activeUser && (
-        <div className="hidden md:flex items-center gap-6">
-          <Link to="/" className={`hover:text-indigo-400 transition-colors text-sm font-medium ${location.pathname === '/' ? 'text-indigo-400 font-bold' : 'text-slate-400'}`}>Feed</Link>
-          <Link to="/chat" className={`hover:text-indigo-400 transition-colors text-sm font-medium ${location.pathname.startsWith('/chat') ? 'text-indigo-400 font-bold' : 'text-slate-400'}`}>Chat</Link>
+        <div className="hidden md:flex items-center gap-8 px-4">
+          <Link to="/" className={`hover:text-indigo-400 transition-all text-xs font-black uppercase tracking-widest ${location.pathname === '/' ? 'text-indigo-400 border-b-2 border-indigo-500 pb-1' : 'text-slate-500'}`}>Feed</Link>
+          <Link to="/chat" className={`hover:text-indigo-400 transition-all text-xs font-black uppercase tracking-widest ${location.pathname.startsWith('/chat') ? 'text-indigo-400 border-b-2 border-indigo-500 pb-1' : 'text-slate-500'}`}>Lobby</Link>
           {activeUser.role === 'admin' && (
-             <Link to="/admin" className={`hover:text-red-400 transition-colors text-sm font-bold ${location.pathname === '/admin' ? 'text-red-400' : 'text-slate-400'}`}>Dashboard</Link>
+             <Link to="/admin" className={`hover:text-red-400 transition-all text-xs font-black uppercase tracking-widest ${location.pathname === '/admin' ? 'text-red-400 border-b-2 border-red-500 pb-1' : 'text-slate-500'}`}>Dashboard</Link>
           )}
-          <Link to="/pro" className={`hover:text-amber-400 transition-colors text-sm font-medium ${location.pathname === '/pro' ? 'text-amber-400 font-bold' : 'text-slate-400'}`}>Upgrade</Link>
+          <Link to="/pro" className={`hover:text-amber-400 transition-all text-xs font-black uppercase tracking-widest ${location.pathname === '/pro' ? 'text-amber-400 border-b-2 border-amber-500 pb-1' : 'text-slate-500'}`}>Upgrade</Link>
         </div>
       )}
 
-      <div className="flex items-center gap-3 flex-shrink-0">
+      <div className="flex items-center gap-3 flex-shrink-0" ref={menuRef}>
         {activeUser ? (
-          <div className="flex items-center gap-3">
-            <Link to={`/profile/${activeUser.uid}`} className="flex items-center gap-3 bg-slate-800/50 p-1 pr-4 rounded-full border border-white/5 cursor-pointer hover:bg-slate-700/50 transition-all">
+          <div className="relative">
+            <button 
+              onClick={() => setShowUserMenu(!showUserMenu)}
+              className="flex items-center gap-3 bg-slate-900/80 p-1.5 pr-4 rounded-2xl border border-white/10 hover:bg-slate-800 transition-all active:scale-95 group shadow-lg"
+            >
               <div className="relative">
-                <img src={activeUser.photoURL || `https://ui-avatars.com/api/?name=${activeUser.displayName}`} alt="p" className="w-8 h-8 rounded-full object-cover" />
-                <div className="absolute -bottom-0.5 -right-0.5">
-                   <div className={`w-2.5 h-2.5 rounded-full border border-slate-900 ${activeUser.role !== 'user' ? 'bg-indigo-500' : 'bg-green-500'}`}></div>
-                </div>
+                <img src={activeUser.photoURL} alt="p" className="w-9 h-9 rounded-xl object-cover" />
+                <div className={`absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full border-2 border-slate-900 ${activeUser.role !== 'user' ? 'bg-indigo-500' : 'bg-green-500'}`}></div>
               </div>
-              <div className="hidden md:block text-[10px]">
-                <div className="flex items-center gap-1">
-                  <p className="font-bold text-slate-200 leading-none">{activeUser.displayName}</p>
-                  <UserBadge role={activeUser.role} />
-                </div>
-                <p className="text-slate-500 leading-none mt-1">My Profile</p>
+              <div className="hidden md:block text-left">
+                <p className="font-black text-slate-200 text-xs leading-none uppercase tracking-tight">{activeUser.displayName.split(' ')[0]}</p>
+                <p className="text-slate-500 text-[9px] font-bold mt-1 uppercase">Menu</p>
               </div>
-            </Link>
-            <button onClick={handleLogout} className="text-slate-500 hover:text-red-400 p-2 transition-colors" title="Logout">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
             </button>
+
+            {showUserMenu && (
+              <div className="absolute top-full right-0 mt-3 w-56 bg-slate-900/95 backdrop-blur-2xl border border-white/10 rounded-[1.5rem] shadow-2xl p-2 animate-fadeIn ring-1 ring-white/5 overflow-hidden">
+                <div className="p-3 border-b border-white/5 mb-1">
+                  <p className="text-xs font-black text-slate-200 truncate">{activeUser.displayName}</p>
+                  <p className="text-[9px] text-slate-500 font-bold truncate mt-0.5">{activeUser.email}</p>
+                </div>
+                <Link to={`/profile/${activeUser.uid}`} onClick={() => setShowUserMenu(false)} className="flex items-center gap-3 p-3 hover:bg-white/5 rounded-xl transition-all text-slate-400 hover:text-white group">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                  <span className="text-xs font-black uppercase tracking-widest">My Profile</span>
+                </Link>
+                <button onClick={handleSwitchAccount} className="w-full flex items-center gap-3 p-3 hover:bg-indigo-500/10 rounded-xl transition-all text-indigo-400 group">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /></svg>
+                  <span className="text-xs font-black uppercase tracking-widest">Switch Account</span>
+                </button>
+                <div className="h-px bg-white/5 my-1"></div>
+                <button onClick={handleLogout} className="w-full flex items-center gap-3 p-3 hover:bg-red-500/10 rounded-xl transition-all text-red-500">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+                  <span className="text-xs font-black uppercase tracking-widest">Logout</span>
+                </button>
+              </div>
+            )}
           </div>
         ) : (
-          <Link to="/auth" className="bg-indigo-600 hover:bg-indigo-700 px-5 py-2 rounded-xl text-sm font-bold shadow-lg shadow-indigo-600/20">Join Community</Link>
+          <Link to="/auth" className="bg-indigo-600 hover:bg-indigo-500 px-6 py-2.5 rounded-2xl text-xs font-black uppercase tracking-widest shadow-lg shadow-indigo-600/30 transition-all hover:scale-105 active:scale-95">Auth Required</Link>
         )}
       </div>
     </nav>
@@ -190,9 +217,9 @@ const App: React.FC = () => {
           const isAdmin = firebaseUser.email === ADMIN_EMAIL;
           setCurrentUser({
             uid: firebaseUser.uid,
-            displayName: firebaseUser.displayName || 'User',
+            displayName: firebaseUser.displayName || 'Anonymous Signal',
             email: firebaseUser.email || '',
-            photoURL: firebaseUser.photoURL || '',
+            photoURL: firebaseUser.photoURL || `https://ui-avatars.com/api/?name=${firebaseUser.displayName || 'U'}&background=random`,
             bio: '',
             isPro: isAdmin,
             role: isAdmin ? 'admin' : 'user',
@@ -209,10 +236,14 @@ const App: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <div className="bg-indigo-600 text-white w-12 h-12 rounded-2xl font-bold text-2xl flex items-center justify-center animate-bounce shadow-xl shadow-indigo-600/40">A</div>
-          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-indigo-500"></div>
+      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center gap-8">
+        <div className="relative">
+          <div className="bg-indigo-600 text-white w-20 h-20 rounded-[2.5rem] font-black text-4xl flex items-center justify-center animate-bounce shadow-2xl shadow-indigo-600/50">A</div>
+          <div className="absolute -inset-4 bg-indigo-500/20 rounded-full blur-2xl animate-pulse"></div>
+        </div>
+        <div className="flex flex-col items-center gap-2">
+           <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-indigo-500 border-b-2 border-transparent"></div>
+           <p className="text-slate-600 text-[10px] font-black uppercase tracking-[0.4em]">Syncing Signal</p>
         </div>
       </div>
     );
@@ -221,11 +252,13 @@ const App: React.FC = () => {
   return (
     <Router>
       <SocialBarAd />
-      <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col selection:bg-indigo-500/30">
+      <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col selection:bg-indigo-500/30 overflow-x-hidden">
         <Navbar activeUser={currentUser} />
         
-        <main className="flex-1 container mx-auto max-w-5xl px-4 py-6">
-          <AdsterraAd id="header-main" />
+        <main className="flex-1 container mx-auto max-w-5xl px-4 py-8">
+          <div className="mb-8">
+            <AdsterraAd id="top-global" />
+          </div>
           
           <Routes>
             <Route path="/" element={currentUser ? <FeedView user={currentUser} /> : <Navigate to="/auth" />} />
@@ -235,14 +268,23 @@ const App: React.FC = () => {
             <Route path="/chat/:chatId" element={currentUser ? <ChatView activeUser={currentUser} /> : <Navigate to="/auth" />} />
             <Route path="/pro" element={currentUser ? <UpgradeView activeUser={currentUser} /> : <Navigate to="/auth" />} />
             <Route path="/admin" element={currentUser?.role === 'admin' ? <AdminView activeUser={currentUser} /> : <Navigate to="/" />} />
+            <Route path="*" element={<Navigate to="/" />} />
           </Routes>
         </main>
 
         <SupportWidget />
         
-        <footer className="p-12 text-center text-slate-700 text-xs border-t border-white/5 bg-slate-900/20">
-          <p className="mb-2">Akti Forum Community &bull; Building for the future</p>
-          <p>&copy; {new Date().getFullYear()} All rights reserved.</p>
+        <footer className="mt-auto py-16 border-t border-white/5 bg-slate-900/10">
+          <div className="container mx-auto px-4 text-center">
+            <div className="flex justify-center gap-8 mb-8">
+              <Link to="/pro" className="text-xs font-black text-slate-500 hover:text-amber-500 uppercase tracking-widest transition-colors">Premium</Link>
+              <Link to="/chat" className="text-xs font-black text-slate-500 hover:text-indigo-400 uppercase tracking-widest transition-colors">Community</Link>
+              <a href="#" className="text-xs font-black text-slate-500 hover:text-white uppercase tracking-widest transition-colors">Privacy</a>
+            </div>
+            <p className="text-slate-700 text-[10px] font-black uppercase tracking-widest">
+              Akti Forum Infrastructure &bull; &copy; {new Date().getFullYear()} &bull; Built for Performance
+            </p>
+          </div>
         </footer>
       </div>
     </Router>

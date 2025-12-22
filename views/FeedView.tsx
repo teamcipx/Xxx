@@ -25,18 +25,18 @@ const CommentSection: React.FC<{ postId: string; user: User }> = ({ postId, user
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState('');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [indexError, setIndexError] = useState(false);
 
   useEffect(() => {
-    setError(null);
+    setIndexError(false);
     const q = query(collection(db, 'comments'), where('postId', '==', postId), orderBy('createdAt', 'asc'));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Comment));
       setComments(data);
-    }, (err) => {
+    }, (err: any) => {
       console.error("Firestore Comment Error:", err);
       if (err.code === 'failed-precondition') {
-        setError("Comments index required. Admin needs to create it.");
+        setIndexError(true);
       }
     });
     return unsubscribe;
@@ -85,7 +85,20 @@ const CommentSection: React.FC<{ postId: string; user: User }> = ({ postId, user
         </div>
       </div>
       
-      {error && <p className="text-[10px] text-red-400 font-bold italic">{error}</p>}
+      {indexError && (
+        <div className="bg-red-500/10 p-3 rounded-xl border border-red-500/20">
+          <p className="text-[10px] text-red-400 font-bold mb-2">Firestore index required for comments.</p>
+          {user.role === 'admin' && (
+            <a 
+              href="https://console.firebase.google.com/v1/r/project/usersss-369bb/firestore/indexes?create_composite=Ck5wcm9qZWN0cy91c2Vyc3NzLTM2OWJiL2RhdGFiYXNlcy8oZGVmYXVsdCkvY29sbGVjdGlvbkdyb3Vwcy9jb21tZW50cy9pbmRleGVzL18QARoMCghhdXRob3JJZBABGg0KCWNyZWF0ZWRBdBACGgwKCF9fbmFtZV9fEAI"
+              target="_blank" rel="noreferrer"
+              className="text-[9px] bg-red-600 text-white px-2 py-1 rounded uppercase font-black"
+            >
+              Create Index Now
+            </a>
+          )}
+        </div>
+      )}
       
       <div className="space-y-3 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
         {comments.map(c => (
