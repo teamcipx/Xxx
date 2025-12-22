@@ -45,5 +45,17 @@ export interface ChatMessage {
   senderRole?: UserRole;
   text: string;
   createdAt: number;
-  chatId?: string; // For private chats
+  chatId?: string;
+}
+
+export interface Transaction {
+  id: string;
+  userId: string;
+  userName: string;
+  userEmail: string;
+  txId: string;
+  imageUrl?: string;
+  status: 'pending' | 'approved' | 'rejected';
+  createdAt: number;
+  plan: string;
 }

@@ -1,5 +1,6 @@
+
 import React, { useState, useEffect } from 'react';
-import { User, UserRole, Post, Comment } from '../types';
+import { User, UserRole, Post, Comment, Transaction } from '../types';
 import { db } from '../services/firebase';
 import { 
   collection, 
@@ -10,16 +11,17 @@ import {
   orderBy, 
   limit, 
   getCountFromServer,
-  deleteDoc
+  deleteDoc,
+  onSnapshot
 } from 'firebase/firestore';
 import { UserBadge } from '../components/UserBadge';
-import { Link } from 'react-router-dom';
 
-type AdminTab = 'overview' | 'users' | 'moderation' | 'analytics' | 'infrastructure';
+type AdminTab = 'overview' | 'users' | 'payments' | 'moderation' | 'analytics' | 'infrastructure';
 
 const AdminView: React.FC<{ activeUser: User }> = ({ activeUser }) => {
   const [activeTab, setActiveTab] = useState<AdminTab>('overview');
   const [users, setUsers] = useState<User[]>([]);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [recentPosts, setRecentPosts] = useState<Post[]>([]);
   const [recentComments, setRecentComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -33,50 +35,54 @@ const AdminView: React.FC<{ activeUser: User }> = ({ activeUser }) => {
 
   useEffect(() => {
     fetchGlobalData();
+    // Listen for transactions separately
+    const tQ = query(collection(db, 'transactions'), orderBy('createdAt', 'desc'));
+    const unsubscribe = onSnapshot(tQ, (snapshot) => {
+      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Transaction));
+      setTransactions(data);
+    });
+    return unsubscribe;
   }, []);
 
   const fetchGlobalData = async () => {
     setLoading(true);
     try {
-      // Fetch Counts safely
       let uCount = 0, pCount = 0, cCount = 0;
       try {
         const usersSnap = await getCountFromServer(collection(db, 'users'));
         uCount = usersSnap.data().count;
-      } catch (e) { console.warn("Users count failed", e); }
+      } catch (e) { console.warn(e); }
       
       try {
         const postsSnap = await getCountFromServer(collection(db, 'posts'));
         pCount = postsSnap.data().count;
-      } catch (e) { console.warn("Posts count failed", e); }
+      } catch (e) { console.warn(e); }
       
       try {
         const commentsSnap = await getCountFromServer(collection(db, 'comments'));
         cCount = commentsSnap.data().count;
-      } catch (e) { console.warn("Comments count failed", e); }
+      } catch (e) { console.warn(e); }
 
-      // Fetch Users list
       let fetchedUsers: User[] = [];
       try {
         const uQ = query(collection(db, 'users'), orderBy('joinedAt', 'desc'), limit(20));
         const uSnapshot = await getDocs(uQ);
         fetchedUsers = uSnapshot.docs.map(doc => doc.data() as User);
-      } catch (e) { console.error("User list fetch error", e); }
+      } catch (e) { console.error(e); }
       
-      // Fetch Recent Activity for moderation
       let posts: Post[] = [];
       try {
         const pQ = query(collection(db, 'posts'), orderBy('createdAt', 'desc'), limit(10));
         const pSnapshot = await getDocs(pQ);
         posts = pSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post));
-      } catch (e) { console.error("Recent posts fetch error", e); }
+      } catch (e) { console.error(e); }
 
       let comments: Comment[] = [];
       try {
         const cQ = query(collection(db, 'comments'), orderBy('createdAt', 'desc'), limit(10));
         const cSnapshot = await getDocs(cQ);
         comments = cSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Comment));
-      } catch (e) { console.error("Recent comments fetch error", e); }
+      } catch (e) { console.error(e); }
 
       setUsers(fetchedUsers);
       setRecentPosts(posts);
@@ -89,7 +95,7 @@ const AdminView: React.FC<{ activeUser: User }> = ({ activeUser }) => {
         growthRate: '+14%'
       });
     } catch (err) {
-      console.error("Critical Admin fetch error:", err);
+      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -104,24 +110,125 @@ const AdminView: React.FC<{ activeUser: User }> = ({ activeUser }) => {
       });
       setUsers(prev => prev.map(u => u.uid === uid ? { ...u, role: newRole, isPro: newRole !== 'user' } : u));
     } catch (err) {
-      alert("Failed to update user role.");
+      alert("Failed to update.");
     }
   };
 
-  const handleDeletePost = async (id: string) => {
-    if (window.confirm("Delete post?")) {
-      await deleteDoc(doc(db, 'posts', id));
-      setRecentPosts(prev => prev.filter(p => p.id !== id));
+  const handleApprovePayment = async (tx: Transaction) => {
+    if (!window.confirm(`Approve payment for ${tx.userName}? This will grant them Pro access.`)) return;
+    
+    try {
+      // 1. Update Transaction status
+      await updateDoc(doc(db, 'transactions', tx.id), { status: 'approved' });
+      
+      // 2. Upgrade User
+      await updateDoc(doc(db, 'users', tx.userId), { 
+        role: 'pro',
+        isPro: true 
+      });
+      
+      alert("Payment Approved. User is now a Pro Member.");
+    } catch (err) {
+      alert("Verification failed.");
+    }
+  };
+
+  const handleRejectPayment = async (txId: string) => {
+    if (!window.confirm("Reject this payment?")) return;
+    await updateDoc(doc(db, 'transactions', txId), { status: 'rejected' });
+  };
+
+  // Fix: Added handleDeletePost missing function
+  const handleDeletePost = async (postId: string) => {
+    if (window.confirm("Are you sure you want to delete this post? This action is irreversible.")) {
+      try {
+        await deleteDoc(doc(db, 'posts', postId));
+        setRecentPosts(prev => prev.filter(p => p.id !== postId));
+        setStats(prev => ({ ...prev, totalPosts: Math.max(0, prev.totalPosts - 1) }));
+      } catch (err) {
+        console.error("Moderation Delete Error:", err);
+        alert("Failed to delete post.");
+      }
     }
   };
 
   const sidebarItems = [
     { id: 'overview', label: 'Overview', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
-    { id: 'users', label: 'Users', icon: 'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z' },
+    { id: 'users', label: 'Citizens', icon: 'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z' },
+    { id: 'payments', label: 'Payments', icon: 'M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z' },
     { id: 'moderation', label: 'Moderation', icon: 'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z' },
     { id: 'analytics', label: 'Analytics', icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z' },
-    { id: 'infrastructure', label: 'System', icon: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z' },
   ];
+
+  const renderPayments = () => (
+    <div className="glass-effect rounded-[2.5rem] overflow-hidden border border-white/5 shadow-2xl animate-fadeIn">
+      <div className="p-8 border-b border-white/5 bg-slate-900/40">
+        <h3 className="font-black text-slate-100 uppercase tracking-widest text-xs">Payment Verification Node</h3>
+        <p className="text-slate-500 text-[10px] font-bold mt-1 uppercase">Pending signals: {transactions.filter(t => t.status === 'pending').length}</p>
+      </div>
+      <div className="overflow-x-auto custom-scrollbar">
+        <table className="w-full text-left border-collapse">
+          <thead>
+            <tr className="bg-slate-900/30">
+              <th className="p-6 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] border-b border-white/5">Member</th>
+              <th className="p-6 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] border-b border-white/5">Details</th>
+              <th className="p-6 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] border-b border-white/5">Proof</th>
+              <th className="p-6 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] border-b border-white/5">Status</th>
+              <th className="p-6 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] border-b border-white/5 text-right">Control</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-white/5">
+            {transactions.map(tx => (
+              <tr key={tx.id} className="hover:bg-white/5 transition-colors group">
+                <td className="p-6">
+                  <div>
+                    <p className="font-black text-slate-100 uppercase text-xs">{tx.userName}</p>
+                    <p className="text-[10px] text-slate-600 font-bold">{tx.userEmail}</p>
+                  </div>
+                </td>
+                <td className="p-6">
+                  <div className="bg-slate-950/40 p-2 rounded-lg border border-white/5 inline-block">
+                    <p className="text-[10px] text-indigo-400 font-mono">{tx.txId || 'NO TX-ID'}</p>
+                  </div>
+                </td>
+                <td className="p-6">
+                  {tx.imageUrl ? (
+                    <a href={tx.imageUrl} target="_blank" rel="noreferrer" className="block relative group/img">
+                      <img src={tx.imageUrl} alt="proof" className="w-12 h-12 rounded-lg object-cover ring-1 ring-white/10 group-hover/img:scale-110 transition-transform" />
+                      <div className="absolute inset-0 bg-indigo-600/20 opacity-0 group-hover/img:opacity-100 rounded-lg flex items-center justify-center transition-opacity">
+                         <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                      </div>
+                    </a>
+                  ) : <span className="text-[9px] text-slate-700 font-black">N/A</span>}
+                </td>
+                <td className="p-6">
+                   <span className={`px-2.5 py-1 rounded-md text-[8px] font-black uppercase tracking-widest ${
+                     tx.status === 'pending' ? 'bg-amber-500/10 text-amber-500 border border-amber-500/20' : 
+                     tx.status === 'approved' ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' : 
+                     'bg-red-500/10 text-red-500 border border-red-500/20'
+                   }`}>
+                     {tx.status}
+                   </span>
+                </td>
+                <td className="p-6">
+                  {tx.status === 'pending' && (
+                    <div className="flex gap-2 justify-end">
+                      <button onClick={() => handleApprovePayment(tx)} className="p-2 bg-emerald-500/10 hover:bg-emerald-500 text-emerald-500 hover:text-white rounded-xl transition-all shadow-lg">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                      </button>
+                      <button onClick={() => handleRejectPayment(tx.id)} className="p-2 bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white rounded-xl transition-all shadow-lg">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                      </button>
+                    </div>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
 
   const renderOverview = () => (
     <div className="space-y-8 animate-fadeIn">
@@ -304,34 +411,6 @@ const AdminView: React.FC<{ activeUser: User }> = ({ activeUser }) => {
     </div>
   );
 
-  const renderInfrastructure = () => (
-    <div className="space-y-8 animate-fadeIn">
-      <div className="glass-effect rounded-[2.5rem] p-10 border border-indigo-500/10">
-        <h3 className="text-xl font-black text-slate-100 mb-2">Technical Core</h3>
-        <p className="text-slate-500 text-xs font-medium mb-8">Maintain the data integrity of Akti Forum by initializing required search indexes.</p>
-        <div className="grid md:grid-cols-2 gap-6">
-          {[
-            { label: 'Index: Posts Engine', path: 'posts', link: 'Cktwcm9qZWN0cy91c2Vyc3NzLTM2OWJiL2RhdGFiYXNlcy8oZGVmYXVsdCkvY29sbGVjdGlvbkdyb3Vwcy9wb3N0cy9pbmRleGVzL18QARoMCghhdXRob3JJZBABGg0KCWNyZWF0ZWRBdBACGgwKCF9fbmFtZV9fEAI' },
-            { label: 'Index: Voice Engine', path: 'comments', link: 'Ck5wcm9qZWN0cy91c2Vyc3NzLTM2OWJiL2RhdGFiYXNlcy8oZGVmYXVsdCkvY29sbGVjdGlvbkdyb3Vwcy9jb21tZW50cy9pbmRleGVzL18QARoMCghhdXRob3JJZBABGg0KCWNyZWF0ZWRBdBACGgwKCF9fbmFtZV9fEAI' },
-          ].map((idx, i) => (
-            <a 
-              key={i}
-              href={`https://console.firebase.google.com/v1/r/project/usersss-369bb/firestore/indexes?create_composite=${idx.link}`}
-              target="_blank" rel="noopener noreferrer"
-              className="flex items-center justify-between p-6 bg-slate-950/40 rounded-3xl border border-white/5 hover:border-indigo-500/40 transition-all group"
-            >
-              <div>
-                <p className="text-xs font-black text-slate-200 uppercase tracking-widest group-hover:text-indigo-400">{idx.label}</p>
-                <p className="text-[10px] text-slate-600 font-bold mt-1">Status: Configuration Ready</p>
-              </div>
-              <svg className="w-5 h-5 text-slate-700 group-hover:text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
-            </a>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-
   return (
     <div className="flex flex-col lg:flex-row gap-8 min-h-[80vh]">
       <div className="lg:w-64 flex-shrink-0">
@@ -361,9 +440,9 @@ const AdminView: React.FC<{ activeUser: User }> = ({ activeUser }) => {
           <>
             {activeTab === 'overview' && renderOverview()}
             {activeTab === 'users' && renderUsers()}
+            {activeTab === 'payments' && renderPayments()}
             {activeTab === 'moderation' && renderModeration()}
             {activeTab === 'analytics' && renderAnalytics()}
-            {activeTab === 'infrastructure' && renderInfrastructure()}
           </>
         )}
       </div>
