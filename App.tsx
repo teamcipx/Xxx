@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { HashRouter as Router, Routes, Route, Link, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { User, UserRole } from './types';
@@ -229,7 +228,9 @@ const App: React.FC = () => {
       if (firebaseUser) {
         try {
           const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
-          const isAdmin = firebaseUser.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase();
+          const userEmail = (firebaseUser.email || '').trim().toLowerCase();
+          const targetAdminEmail = ADMIN_EMAIL.trim().toLowerCase();
+          const isAdmin = userEmail === targetAdminEmail;
           
           if (userDoc.exists()) {
             const data = userDoc.data() as User;
@@ -247,7 +248,7 @@ const App: React.FC = () => {
             const newUser: User = {
               uid: firebaseUser.uid,
               displayName: firebaseUser.displayName || 'Entity_' + Math.floor(Math.random() * 1000),
-              email: firebaseUser.email || '',
+              email: userEmail,
               photoURL: firebaseUser.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(firebaseUser.displayName || 'U')}&background=random`,
               bio: isAdmin ? 'Master Administrator' : 'New Citizen of Akti Forum',
               isPro: isAdmin,
