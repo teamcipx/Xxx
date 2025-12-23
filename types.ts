@@ -92,3 +92,28 @@ export interface Transaction {
   createdAt: number;
   plan: string;
 }
+
+export interface Report {
+  id: string;
+  reporterId: string;
+  reporterName: string;
+  targetId: string; // post or user id
+  targetType: 'post' | 'user' | 'comment';
+  reason: string;
+  status: 'pending' | 'resolved' | 'dismissed';
+  createdAt: number;
+}
+
+export interface AdminMessage {
+  id: string;
+  senderId: string;
+  senderName: string;
+  senderEmail: string;
+  senderPhoto?: string;
+  subject: string;
+  message: string;
+  createdAt: number;
+  read: boolean;
+  isAdminReply?: boolean;
+  conversationId: string; // Used to group messages with a specific user
+}
