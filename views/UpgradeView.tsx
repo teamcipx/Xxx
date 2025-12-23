@@ -5,6 +5,8 @@ import { db } from '../services/firebase';
 import { collection, addDoc, query, where, onSnapshot } from 'firebase/firestore';
 import { uploadToImgBB } from '../services/imgbb';
 
+const TELEGRAM_SUPPORT = 'https://t.me/securehx';
+
 const UpgradeView: React.FC<{ activeUser: User }> = ({ activeUser }) => {
   const [loading, setLoading] = useState(false);
   const [txId, setTxId] = useState('');
@@ -85,7 +87,7 @@ const UpgradeView: React.FC<{ activeUser: User }> = ({ activeUser }) => {
           <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
         </div>
         <h2 className="text-3xl font-black text-white tracking-tight uppercase">Verification Pending</h2>
-        <p className="text-slate-400 font-medium leading-relaxed">Your payment information has been transmitted to the High Command. An admin will verify your transaction shortly.</p>
+        <p className="text-slate-400 font-medium leading-relaxed">Your payment information has been transmitted to the High Command. If you have issues, contact us at <a href={TELEGRAM_SUPPORT} target="_blank" rel="noreferrer" className="text-indigo-400 underline">Telegram</a>.</p>
         <div className="bg-slate-900/50 p-4 rounded-2xl border border-white/5 inline-block mx-auto">
           <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Status: Waiting for Admin Approval</p>
         </div>
@@ -122,24 +124,8 @@ const UpgradeView: React.FC<{ activeUser: User }> = ({ activeUser }) => {
               </div>
             </div>
             <div className="p-4 bg-amber-500/5 rounded-2xl border border-amber-500/10">
-              <p className="text-[10px] text-amber-500/80 leading-relaxed font-medium italic">"Ensure you capture a screenshot of your success screen or copy the Transaction ID for the next step."</p>
+              <p className="text-[10px] text-amber-500/80 leading-relaxed font-medium italic">"Ensure you capture a screenshot of your success screen or copy the Transaction ID. For help, message <a href={TELEGRAM_SUPPORT} target="_blank" rel="noreferrer" className="underline font-bold">@securehx</a> on Telegram."</p>
             </div>
-          </div>
-          
-          <div className="space-y-3 pt-4">
-            <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Premium Features</h3>
-            {[
-              "View Full Post Content",
-              "Decrypt Media & Images",
-              "Post Comments & Likes",
-              "Access Global Chat Nodes",
-              "Direct Messaging Privileges"
-            ].map((f, i) => (
-              <div key={i} className="flex items-center gap-3 text-[10px] text-slate-500 font-bold uppercase tracking-tight">
-                <svg className="w-3 h-3 text-green-500" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
-                {f}
-              </div>
-            ))}
           </div>
         </div>
 
@@ -201,6 +187,7 @@ const UpgradeView: React.FC<{ activeUser: User }> = ({ activeUser }) => {
               )}
             </button>
           </form>
+          <p className="mt-4 text-center text-[10px] font-black text-slate-600 uppercase tracking-widest">Only Telegram support at <a href={TELEGRAM_SUPPORT} target="_blank" rel="noreferrer" className="text-indigo-400 underline">t.me/securehx</a></p>
         </div>
       </div>
     </div>

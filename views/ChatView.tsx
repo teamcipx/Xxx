@@ -15,6 +15,7 @@ import {
   where
 } from 'firebase/firestore';
 import { UserBadge } from '../components/UserBadge';
+import { AdsterraAd } from '../components/AdsterraAd';
 
 interface ChatSummary {
   chatId: string;
@@ -117,8 +118,8 @@ const ChatView: React.FC<{ activeUser: User }> = ({ activeUser }) => {
       <div className={`${showListOnMobile ? 'flex' : 'hidden'} lg:flex flex-col w-full lg:w-80 border-r border-white/5 bg-slate-950/20`}>
         <div className="p-5 md:p-6 border-b border-white/5 bg-slate-900/40 flex justify-between items-center">
            <h2 className="text-[10px] md:text-xs font-black text-white uppercase tracking-widest">Messenger Nodes</h2>
-           <div className="lg:hidden px-3 py-1 bg-rose-600/10 border border-rose-500/20 rounded-lg text-[8px] font-black text-rose-500 uppercase">Selection</div>
         </div>
+        
         <div className="flex-1 overflow-y-auto custom-scrollbar">
            <button 
              onClick={() => { navigate('/chat'); setShowListOnMobile(false); }}
@@ -127,6 +128,11 @@ const ChatView: React.FC<{ activeUser: User }> = ({ activeUser }) => {
               <div className="w-10 h-10 md:w-11 md:h-11 bg-rose-600 rounded-2xl flex items-center justify-center text-white shadow-lg"><svg className="w-5 h-5 md:w-6 md:h-6" fill="currentColor" viewBox="0 0 20 20"><path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z" /></svg></div>
               <div><p className="text-[10px] md:text-[11px] font-black text-white uppercase tracking-tighter">Global Signal</p><p className="text-[9px] text-slate-500">Public Community</p></div>
            </button>
+           
+           <div className="px-4">
+             <AdsterraAd id="chat-sidebar-ad" format="banner" className="my-4" />
+           </div>
+
            {recentChats.map(rc => (
              <button 
                key={rc.chatId} 
@@ -163,7 +169,6 @@ const ChatView: React.FC<{ activeUser: User }> = ({ activeUser }) => {
                 <p className="text-[8px] md:text-[10px] text-slate-500 font-black uppercase tracking-widest">{isPrivate ? 'Encrypted' : 'Public'}</p>
              </div>
           </div>
-          <div className="hidden sm:flex px-3 py-1 bg-white/5 border border-white/10 rounded-lg text-[8px] font-black text-slate-500 uppercase tracking-widest">Live Node</div>
         </div>
 
         <div className="flex-1 overflow-y-auto p-5 md:p-8 space-y-4 md:space-y-6 custom-scrollbar" ref={scrollRef}>
@@ -192,6 +197,10 @@ const ChatView: React.FC<{ activeUser: User }> = ({ activeUser }) => {
               );
             })
           )}
+        </div>
+
+        <div className="px-4 py-2 border-t border-white/5 bg-slate-900/40">
+           <AdsterraAd id="chat-bottom-native" format="native" className="my-0" />
         </div>
 
         <div className="p-4 md:p-6 bg-slate-900/60 border-t border-white/5 flex gap-3 md:gap-4 backdrop-blur-md">

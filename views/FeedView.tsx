@@ -154,6 +154,9 @@ const FeedView: React.FC<{ user: User }> = ({ user }) => {
 
   return (
     <div className="max-w-3xl mx-auto space-y-6 md:space-y-10 animate-fadeIn px-1 md:px-0">
+      {/* Top Banner Ad */}
+      <AdsterraAd id="feed-top-banner" format="banner" />
+
       {/* Context Header */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-3 px-2 md:px-0">
         <div>
@@ -173,6 +176,7 @@ const FeedView: React.FC<{ user: User }> = ({ user }) => {
         {!isPremium && (
           <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-slate-950/40 backdrop-blur-sm p-4 text-center cursor-pointer" onClick={() => navigate('/pro')}>
              <p className="text-white font-black uppercase text-[10px] md:text-xs tracking-widest">Upgrade to Broadcast Signal</p>
+             <AdsterraAd id="creation-lock-ad" format="banner" className="mt-4 scale-75" />
           </div>
         )}
         
@@ -207,6 +211,9 @@ const FeedView: React.FC<{ user: User }> = ({ user }) => {
         </div>
       </div>
 
+      {/* Middle Banner Ad */}
+      <AdsterraAd id="feed-mid-native" format="native" />
+
       {/* Stream */}
       <div className="space-y-6 md:space-y-10 pb-10">
         {fetching ? (
@@ -217,7 +224,7 @@ const FeedView: React.FC<{ user: User }> = ({ user }) => {
         ) : (
           posts.map((post, idx) => (
             <React.Fragment key={post.id}>
-              {idx > 0 && idx % 4 === 0 && <AdsterraAd id={`feed-node-${idx}`} />}
+              {idx > 0 && idx % 3 === 0 && <AdsterraAd id={`feed-node-${idx}`} format={idx % 2 === 0 ? 'banner' : 'native'} />}
               <div className="glass-effect rounded-3xl md:rounded-[2.8rem] overflow-hidden border border-white/5 shadow-xl transition-all">
                 <div className="p-5 md:p-10">
                   <div className="flex items-center justify-between mb-5 md:mb-8">
@@ -246,8 +253,10 @@ const FeedView: React.FC<{ user: User }> = ({ user }) => {
                     <div className={`rounded-2xl md:rounded-[2rem] overflow-hidden border border-white/5 bg-slate-950 mt-5 md:mt-8 relative ${!isPremium ? 'grayscale blur-md select-none' : ''}`}>
                       <img src={post.imageUrl} className="w-full h-auto max-h-[400px] md:max-h-[600px] object-cover" alt="c" />
                       {!isPremium && (
-                        <div className="absolute inset-0 flex items-center justify-center bg-black/40" onClick={() => navigate('/pro')}>
-                           <span className="bg-amber-500 text-slate-950 text-[9px] font-black uppercase px-4 py-2 rounded-xl shadow-2xl cursor-pointer">Premium to Decrypt</span>
+                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 backdrop-blur-sm p-4" onClick={() => navigate('/pro')}>
+                           <span className="bg-amber-500 text-slate-950 text-[9px] font-black uppercase px-4 py-2 rounded-xl shadow-2xl cursor-pointer mb-6">Premium to Decrypt</span>
+                           {/* Ad within the blurred premium content area */}
+                           <AdsterraAd id={`premium-lock-ad-${post.id}`} format="banner" className="scale-90" />
                         </div>
                       )}
                     </div>
@@ -274,7 +283,7 @@ const FeedView: React.FC<{ user: User }> = ({ user }) => {
           ))
         )}
       </div>
-      <AdsterraAd id="feed-terminal-bottom" />
+      <AdsterraAd id="feed-terminal-bottom" format="banner" />
     </div>
   );
 };

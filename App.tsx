@@ -5,7 +5,6 @@ import * as ReactRouterDOM from 'react-router-dom';
 const { HashRouter: Router, Routes, Route, Link, useNavigate, useLocation, Navigate } = ReactRouterDOM as any;
 
 import { User } from './types';
-import { SupportWidget } from './components/SupportWidget';
 import { SocialBarAd } from './components/SocialBarAd';
 import FeedView from './views/FeedView';
 import ProfileView from './views/ProfileView';
@@ -15,12 +14,12 @@ import AuthView from './views/AuthView';
 import AdminView from './views/AdminView';
 import OverviewView from './views/OverviewView';
 import MaintenanceView from './views/MaintenanceView';
-import UserInboxView from './views/UserInboxView';
 import { auth, db } from './services/firebase';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { doc, getDoc, updateDoc, onSnapshot } from 'firebase/firestore';
 
 const ADMIN_EMAIL = 'rakibulislamrovin@gmail.com';
+const TELEGRAM_SUPPORT = 'https://t.me/securehx';
 
 const SecureHLogo = () => (
   <div className="flex items-center gap-3 group">
@@ -36,6 +35,20 @@ const SecureHLogo = () => (
       <span className="text-[7px] font-black text-slate-500 uppercase tracking-[0.4em] mt-1">Signal Hub</span>
     </div>
   </div>
+);
+
+const TelegramSupportButton = () => (
+  <a 
+    href={TELEGRAM_SUPPORT} 
+    target="_blank" 
+    rel="noreferrer"
+    className="fixed bottom-6 right-6 z-50 bg-[#229ED9] hover:bg-[#229ED9]/80 text-white p-4 rounded-full shadow-lg transition-all transform hover:scale-110 flex items-center justify-center border border-white/20"
+    title="Telegram Support"
+  >
+    <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69.01-.03.01-.14-.07-.2-.08-.06-.19-.04-.27-.02-.11.02-1.93 1.23-5.46 3.62-.51.35-.98.52-1.4.51-.46-.01-1.35-.26-2.01-.48-.81-.27-1.46-.42-1.4-.88.03-.24.38-.49 1.04-.74 4.06-1.77 6.76-2.93 8.11-3.47 3.84-1.54 4.63-1.81 5.15-1.82.11 0 .37.03.54.17.14.12.18.28.2.45-.02.07-.02.13-.02.19z"/>
+    </svg>
+  </a>
 );
 
 const PendingApprovalView: React.FC<{ user: User }> = ({ user }) => (
@@ -57,6 +70,7 @@ const PendingApprovalView: React.FC<{ user: User }> = ({ user }) => (
         <div className="w-2 h-2 bg-rose-500 rounded-full animate-ping"></div>
         <span className="text-[10px] font-black text-rose-400 uppercase tracking-[0.2em]">Verification In Progress</span>
       </div>
+      <a href={TELEGRAM_SUPPORT} target="_blank" rel="noreferrer" className="text-indigo-400 text-[10px] font-black uppercase tracking-widest hover:underline">Contact Support via Telegram</a>
       <button onClick={() => signOut(auth)} className="text-slate-600 hover:text-white text-[10px] font-black uppercase tracking-widest transition-colors">Disconnect Signal</button>
     </div>
   </div>
@@ -66,8 +80,7 @@ const MobileBottomNav: React.FC<{ activeUser: User | null }> = ({ activeUser }) 
   const location = useLocation();
   if (!activeUser || activeUser.accountStatus !== 'active') return null;
   const isActive = (path: string) => location.pathname === path || (path !== '/' && location.pathname.startsWith(path));
-  const isPremium = activeUser.role !== 'user';
-
+  
   return (
     <div className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-[94%] glass-effect border border-white/10 p-2 rounded-3xl flex items-center justify-around shadow-2xl">
       <Link to="/" className={`p-3 rounded-2xl transition-all ${isActive('/') ? 'bg-rose-500/20 text-rose-400' : 'text-slate-500'}`}>
@@ -76,8 +89,8 @@ const MobileBottomNav: React.FC<{ activeUser: User | null }> = ({ activeUser }) 
       <Link to="/community" className={`p-3 rounded-2xl transition-all ${isActive('/community') ? 'bg-rose-500/20 text-rose-400' : 'text-slate-500'}`}>
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 6h16M4 12h16M4 18h16" /></svg>
       </Link>
-      <Link to="/inbox" className={`p-3 rounded-2xl transition-all ${isActive('/inbox') ? 'bg-indigo-500/20 text-indigo-400' : 'text-slate-500'}`}>
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+      <Link to="/chat" className={`p-3 rounded-2xl transition-all ${isActive('/chat') ? 'bg-indigo-500/20 text-indigo-400' : 'text-slate-500'}`}>
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
       </Link>
       <Link to="/pro" className={`p-3 rounded-2xl transition-all ${isActive('/pro') ? 'bg-amber-500/20 text-amber-400' : 'text-slate-500'}`}>
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
@@ -155,7 +168,6 @@ const App: React.FC = () => {
             {isApproved && (
               <>
                 <Link to="/community" className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-rose-500 transition-colors">Community</Link>
-                <Link to="/inbox" className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-indigo-400 transition-colors">Inbox</Link>
                 <Link to={isPremium ? "/chat" : "/pro"} className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-indigo-400 transition-colors flex items-center gap-2">
                   Transmit
                   {!isPremium && <span className="bg-amber-500 w-1 h-1 rounded-full shadow-[0_0_8px_rgba(245,158,11,0.5)]"></span>}
@@ -195,13 +207,12 @@ const App: React.FC = () => {
             <Route path="/chat/:chatId" element={currentUser ? (isApproved ? (isPremium ? <ChatView activeUser={currentUser} /> : <Navigate to="/pro" />) : <PendingApprovalView user={currentUser} />) : <Navigate to="/auth" />} />
             <Route path="/pro" element={currentUser ? (isApproved ? <UpgradeView activeUser={currentUser} /> : <PendingApprovalView user={currentUser} />) : <Navigate to="/auth" />} />
             <Route path="/admin" element={currentUser?.role === 'admin' ? <AdminView activeUser={currentUser} /> : <Navigate to="/" />} />
-            <Route path="/inbox" element={currentUser ? <UserInboxView activeUser={currentUser} /> : <Navigate to="/auth" />} />
             <Route path="*" element={<Navigate to="/" />} />
           </Routes>
         </div>
 
         <MobileBottomNav activeUser={currentUser} />
-        <SupportWidget />
+        <TelegramSupportButton />
       </div>
     </Router>
   );

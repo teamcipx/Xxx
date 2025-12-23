@@ -1,7 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
 import { User, Gender } from '../types';
-import { generateBio } from '../services/gemini';
 import * as ReactRouterDOM from 'react-router-dom';
 const { useParams, useNavigate } = ReactRouterDOM as any;
 
@@ -22,7 +21,6 @@ const ProfileView: React.FC<{ activeUser: User }> = ({ activeUser }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [dpUploading, setDpUploading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [generatingBio, setGeneratingBio] = useState(false);
 
   // Edit fields
   const [editName, setEditName] = useState('');
@@ -64,18 +62,6 @@ const ProfileView: React.FC<{ activeUser: User }> = ({ activeUser }) => {
       await updateDoc(doc(db, 'users', profileUser.uid), { photoURL: url });
       setProfileUser({ ...profileUser, photoURL: url });
     } finally { setDpUploading(false); }
-  };
-
-  const handleAiBio = async () => {
-    if (!editInterests.trim()) {
-      alert("Calibration requires interests.");
-      return;
-    }
-    setGeneratingBio(true);
-    try {
-      const bio = await generateBio(editInterests);
-      setEditBio(bio);
-    } finally { setGeneratingBio(false); }
   };
 
   const handleSaveProfile = async () => {
@@ -237,10 +223,7 @@ const ProfileView: React.FC<{ activeUser: User }> = ({ activeUser }) => {
               </div>
 
               <div className="md:col-span-2 space-y-3">
-                <div className="flex justify-between items-center">
-                  <label className="block text-[8px] font-black text-slate-500 uppercase ml-1">Protocol Bio</label>
-                  <button onClick={handleAiBio} disabled={generatingBio} className="text-[8px] font-black text-cyan-400 uppercase tracking-widest hover:text-cyan-300 disabled:opacity-50">AI Calibrate</button>
-                </div>
+                <label className="block text-[8px] font-black text-slate-500 uppercase ml-1">Protocol Bio</label>
                 <textarea value={editBio} onChange={(e) => setEditBio(e.target.value)} className="w-full bg-slate-950 border border-white/10 rounded-2xl p-5 text-xs text-slate-300 h-24 outline-none focus:border-rose-500/50 transition-all resize-none" />
               </div>
             </div>
@@ -249,8 +232,12 @@ const ProfileView: React.FC<{ activeUser: User }> = ({ activeUser }) => {
           </div>
         )}
       </div>
+
+      <div className="px-2">
+        <AdsterraAd id="profile-mid-native" format="native" />
+      </div>
       
-      <div className="flex justify-center px-4"><AdsterraAd id="profile-node-bottom" /></div>
+      <div className="flex justify-center px-4"><AdsterraAd id="profile-node-bottom" format="banner" /></div>
     </div>
   );
 };
