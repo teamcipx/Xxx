@@ -2,6 +2,7 @@
 export type UserRole = 'user' | 'premium' | 'pro' | 'admin';
 export type Gender = 'Male' | 'Female' | 'Other' | 'Prefer not to say';
 export type VerificationStatus = 'none' | 'pending' | 'verified' | 'rejected';
+export type PostType = 'standard' | 'article';
 
 export interface User {
   uid: string;
@@ -44,6 +45,8 @@ export interface Post {
   authorPhoto: string;
   authorRole?: UserRole;
   authorVerified?: boolean;
+  type: PostType;
+  title?: string;
   content: string;
   imageUrl?: string;
   likes: string[];

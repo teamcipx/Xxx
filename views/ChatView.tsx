@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { User, ChatMessage } from '../types';
 import { db } from '../services/firebase';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { collection, addDoc, query, orderBy, limit, onSnapshot, where } from 'firebase/firestore';
 import { AdsterraAd } from '../components/AdsterraAd';
 import { UserBadge } from '../components/UserBadge';
@@ -24,7 +24,6 @@ const ChatView: React.FC<{ activeUser: User }> = ({ activeUser }) => {
     let q;
     try {
       if (isPrivate) {
-        // Private chat query
         q = query(
           collection(db, 'messages'),
           where('chatId', '==', chatId),
@@ -32,10 +31,9 @@ const ChatView: React.FC<{ activeUser: User }> = ({ activeUser }) => {
           limit(100)
         );
       } else {
-        // Global lobby query
         q = query(
           collection(db, 'messages'),
-          where('chatId', '==', null), // null chatId means global lobby
+          where('chatId', '==', null),
           orderBy('createdAt', 'asc'),
           limit(50)
         );
@@ -56,11 +54,7 @@ const ChatView: React.FC<{ activeUser: User }> = ({ activeUser }) => {
         }, 100);
       }, (err) => {
         console.error("Firestore Chat Error:", err);
-        if (err.code === 'failed-precondition') {
-          setError("Database index required. Please click the link in the browser console to create it.");
-        } else {
-          setError("Failed to sync messages. Please try again.");
-        }
+        setError("Network signal unstable. Retrying...");
         setLoading(false);
       });
 
@@ -127,11 +121,7 @@ const ChatView: React.FC<{ activeUser: User }> = ({ activeUser }) => {
           </div>
         ) : error ? (
           <div className="flex flex-col items-center justify-center h-full text-center px-10">
-            <div className="bg-red-500/10 p-4 rounded-2xl mb-4 border border-red-500/20">
-               <svg className="w-8 h-8 text-red-500 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
-            </div>
             <p className="text-red-400 font-bold text-sm">{error}</p>
-            <p className="text-slate-500 text-[10px] mt-4 uppercase tracking-widest">Administrator Action Required</p>
           </div>
         ) : messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-slate-600 space-y-4">
@@ -148,7 +138,9 @@ const ChatView: React.FC<{ activeUser: User }> = ({ activeUser }) => {
                 <div className={`max-w-[85%] sm:max-w-[70%] rounded-2xl px-5 py-4 shadow-sm ${isMe ? 'bg-indigo-600 text-white rounded-tr-none' : 'bg-slate-800/80 text-slate-200 rounded-tl-none border border-white/5'}`}>
                   {!isMe && (
                     <div className="flex items-center gap-2 mb-2">
-                       <span className="text-[10px] font-black text-indigo-400 uppercase tracking-wider">{ m.senderName || 'Anonymous' }</span>
+                       <Link to={`/profile/${m.senderId}`} className="text-[10px] font-black text-indigo-400 uppercase tracking-wider hover:text-indigo-300 transition-colors">
+                        { m.senderName || 'Anonymous' }
+                       </Link>
                        <UserBadge role={m.senderRole} />
                     </div>
                   )}
