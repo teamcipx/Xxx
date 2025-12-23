@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { User, Post, Gender } from '../types';
 import { generateBio } from '../services/gemini';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { db } from '../services/firebase';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { AdsterraAd } from '../components/AdsterraAd';
@@ -61,6 +61,9 @@ const ProfileView: React.FC<{ activeUser: User }> = ({ activeUser }) => {
       const url = await uploadToImgBB(file);
       await updateDoc(doc(db, 'users', profileUser.uid), { photoURL: url });
       setProfileUser({ ...profileUser, photoURL: url });
+      if (isOwnProfile) {
+          // Update local activeUser reference conceptually (handled by auth state usually)
+      }
     } finally { setDpUploading(false); }
   };
 
@@ -94,6 +97,13 @@ const ProfileView: React.FC<{ activeUser: User }> = ({ activeUser }) => {
     } finally { setIsSaving(false); }
   };
 
+  const handleStartDM = () => {
+    // Deterministic chat ID for private messaging protocol
+    const participants = [activeUser.uid, targetUid].sort();
+    const chatId = `dm_${participants[0]}_${participants[1]}`;
+    navigate(`/chat/${chatId}`);
+  };
+
   if (loading) return (
     <div className="py-24 flex flex-col items-center gap-6">
       <div className="w-12 h-12 border-4 border-rose-600 border-t-transparent rounded-full animate-spin"></div>
@@ -111,15 +121,17 @@ const ProfileView: React.FC<{ activeUser: User }> = ({ activeUser }) => {
   return (
     <div className="max-w-5xl mx-auto space-y-12 animate-fadeIn pb-32">
       <div className="glass-effect rounded-[3.5rem] overflow-hidden border border-white/10 shadow-2xl relative">
-        <div className="h-56 bg-gradient-to-br from-slate-900 via-slate-950 to-rose-950/30"></div>
+        <div className="h-48 md:h-64 bg-gradient-to-br from-slate-900 via-slate-950 to-rose-950/30 relative">
+          <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-rose-500 via-transparent to-transparent"></div>
+        </div>
         
-        <div className="px-10 pb-16 -mt-24 relative flex flex-col md:flex-row items-end gap-10">
-          <div className="relative group mx-auto md:mx-0">
+        <div className="px-6 md:px-12 pb-16 -mt-24 relative flex flex-col md:flex-row items-center md:items-end gap-8 md:gap-12">
+          <div className="relative group flex-shrink-0">
             <div className="relative">
               <div className="absolute -inset-1 bg-gradient-to-tr from-rose-600 to-indigo-600 rounded-[2.5rem] blur opacity-40"></div>
               <img 
                 src={profileUser.photoURL} 
-                className={`relative w-48 h-48 rounded-[2.5rem] object-cover ring-8 ring-slate-950 shadow-2xl ${dpUploading ? 'opacity-50' : ''}`} 
+                className={`relative w-40 h-40 md:w-56 md:h-56 rounded-[2.5rem] object-cover ring-8 ring-slate-950 shadow-2xl transition-all ${dpUploading ? 'opacity-50 blur-sm' : ''}`} 
                 alt="p" 
               />
             </div>
@@ -133,44 +145,66 @@ const ProfileView: React.FC<{ activeUser: User }> = ({ activeUser }) => {
           
           <div className="flex-1 space-y-6 text-center md:text-left">
             <div className="flex flex-col md:flex-row items-center gap-5">
-              <h2 className="text-5xl font-black text-white uppercase tracking-tighter">{profileUser.displayName}</h2>
-              <UserBadge role={profileUser.role} verified={profileUser.isVerified} className="scale-125 origin-left" />
+              <h2 className="text-4xl md:text-5xl font-black text-white uppercase tracking-tighter">{profileUser.displayName}</h2>
+              <UserBadge role={profileUser.role} verified={profileUser.isVerified} className="scale-110 md:scale-125 origin-center md:origin-left" />
             </div>
-            <div className="flex flex-wrap items-center justify-center md:justify-start gap-4">
-               <div className="px-4 py-1.5 bg-slate-900/60 rounded-xl border border-white/5 text-[9px] font-black uppercase text-slate-400 tracking-widest">{profileUser.age || '??'} Years</div>
-               <div className="px-4 py-1.5 bg-slate-900/60 rounded-xl border border-white/5 text-[9px] font-black uppercase text-slate-400 tracking-widest">{profileUser.gender || 'Unknown'}</div>
-               <div className="px-4 py-1.5 bg-slate-900/60 rounded-xl border border-white/5 text-[9px] font-black uppercase text-slate-400 tracking-widest">{new Date(profileUser.joinedAt).toLocaleDateString()} Link Date</div>
+            
+            <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 md:gap-5">
+               <div className="flex flex-col">
+                  <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">Node Age</span>
+                  <div className="px-4 py-2 bg-slate-900/60 rounded-xl border border-white/5 text-[10px] font-black uppercase text-slate-300 tracking-widest">{profileUser.age || '??'} Yrs</div>
+               </div>
+               <div className="flex flex-col">
+                  <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">Signal Gender</span>
+                  <div className="px-4 py-2 bg-slate-900/60 rounded-xl border border-white/5 text-[10px] font-black uppercase text-slate-300 tracking-widest">{profileUser.gender || '??'}</div>
+               </div>
+               <div className="flex flex-col">
+                  <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">Link Genesis</span>
+                  <div className="px-4 py-2 bg-slate-900/60 rounded-xl border border-white/5 text-[10px] font-black uppercase text-slate-300 tracking-widest">{new Date(profileUser.joinedAt).toLocaleDateString()}</div>
+               </div>
             </div>
-            <p className="text-slate-400 text-lg font-medium italic leading-relaxed max-w-2xl mx-auto md:mx-0">
-               "{profileUser.bio || 'New identity signal detected in the Akti Elite network.'}"
+
+            <p className="text-slate-400 text-base md:text-lg font-medium italic leading-relaxed max-w-2xl mx-auto md:mx-0 border-l-2 border-rose-500/30 pl-4 py-1">
+               "{profileUser.bio || 'Initial signal state. No bio protocol defined.'}"
             </p>
             
-            <div className="flex justify-center md:justify-start gap-6 pt-4">
+            <div className="flex flex-wrap justify-center md:justify-start gap-6 pt-2">
                {profileUser.socials?.telegram && (
-                 <a href={`https://t.me/${profileUser.socials.telegram}`} target="_blank" rel="noreferrer" className="text-indigo-400 hover:text-indigo-300 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest">
-                   Telegram
+                 <a href={`https://t.me/${profileUser.socials.telegram}`} target="_blank" rel="noreferrer" className="flex items-center gap-2 px-4 py-2 bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/20 rounded-xl transition-all group">
+                   <span className="text-[9px] font-black uppercase text-indigo-400 tracking-widest group-hover:text-white">Telegram Signal</span>
                  </a>
                )}
                {profileUser.socials?.facebook && (
-                 <a href={`https://fb.com/${profileUser.socials.facebook}`} target="_blank" rel="noreferrer" className="text-rose-400 hover:text-rose-300 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest">
-                   Facebook
+                 <a href={`https://fb.com/${profileUser.socials.facebook}`} target="_blank" rel="noreferrer" className="flex items-center gap-2 px-4 py-2 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/20 rounded-xl transition-all group">
+                   <span className="text-[9px] font-black uppercase text-blue-400 tracking-widest group-hover:text-white">Facebook Node</span>
                  </a>
                )}
             </div>
           </div>
           
-          {isOwnProfile && (
-            <button 
-              onClick={() => setIsEditing(!isEditing)} 
-              className="px-10 py-5 bg-rose-600 text-white rounded-[1.5rem] text-[10px] font-black uppercase tracking-[0.2em] hover:bg-rose-500 shadow-2xl shadow-rose-600/30 transition-all active:scale-95"
-            >
-              {isEditing ? 'Cancel Sync' : 'Override Protocol'}
-            </button>
-          )}
+          <div className="flex flex-col gap-3 w-full md:w-auto">
+            {isOwnProfile ? (
+              <button 
+                onClick={() => setIsEditing(!isEditing)} 
+                className="w-full md:px-10 py-5 bg-rose-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] hover:bg-rose-500 shadow-2xl shadow-rose-600/30 transition-all active:scale-95 flex items-center justify-center gap-3"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                {isEditing ? 'Cancel Edit' : 'Edit Specs'}
+              </button>
+            ) : (
+              <button 
+                onClick={handleStartDM}
+                className="w-full md:px-10 py-5 bg-indigo-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] hover:bg-indigo-500 shadow-2xl shadow-indigo-600/30 transition-all active:scale-95 flex items-center justify-center gap-3"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
+                Direct Message
+              </button>
+            )}
+          </div>
         </div>
 
         {isEditing && (
-          <div className="p-12 bg-slate-900/40 border-t border-white/10 space-y-10 animate-fadeIn">
+          <div className="p-8 md:p-12 bg-slate-900/40 border-t border-white/10 space-y-10 animate-fadeIn">
             <h3 className="text-xs font-black text-rose-500 uppercase tracking-[0.5em] mb-8">Override Node Specifications</h3>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
@@ -186,7 +220,7 @@ const ProfileView: React.FC<{ activeUser: User }> = ({ activeUser }) => {
                   </div>
                   <div>
                     <label className="block text-[9px] font-black text-slate-500 uppercase tracking-widest mb-3 ml-1">Gender Sync</label>
-                    <select value={editGender} onChange={(e) => setEditGender(e.target.value as Gender)} className="w-full bg-slate-950 border border-white/10 rounded-2xl px-6 py-4 text-xs font-bold text-white outline-none focus:border-rose-500/50 transition-all">
+                    <select value={editGender} onChange={(e) => setEditGender(e.target.value as Gender)} className="w-full bg-slate-950 border border-white/10 rounded-2xl px-6 py-4 text-xs font-bold text-white outline-none focus:border-rose-500/50 transition-all appearance-none">
                       <option value="Male">Male</option>
                       <option value="Female">Female</option>
                       <option value="Other">Other</option>
