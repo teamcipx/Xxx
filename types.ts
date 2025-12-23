@@ -2,6 +2,7 @@
 export type UserRole = 'user' | 'premium' | 'pro' | 'admin';
 export type Gender = 'Male' | 'Female' | 'Other' | 'Prefer not to say';
 export type VerificationStatus = 'none' | 'pending' | 'verified' | 'rejected';
+export type AccountStatus = 'pending' | 'active' | 'banned';
 export type PostType = 'standard' | 'article';
 
 export interface User {
@@ -13,6 +14,7 @@ export interface User {
   isPro: boolean;
   isVerified?: boolean;
   verificationStatus?: VerificationStatus;
+  accountStatus: AccountStatus;
   role: UserRole;
   joinedAt: number;
   age?: number;

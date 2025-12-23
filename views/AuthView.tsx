@@ -57,6 +57,7 @@ const AuthView: React.FC = () => {
           bio: isAdmin ? 'Akti Forum Official Administrator' : 'Newly joined mature member.',
           isPro: isAdmin,
           role: isAdmin ? 'admin' : 'user',
+          accountStatus: isAdmin ? 'active' : 'pending', // Gatekeeper: All users start as pending
           joinedAt: Date.now(),
           age: parseInt(age) || 18,
           gender: gender,

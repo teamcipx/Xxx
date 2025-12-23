@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { HashRouter as Router, Routes, Route, Link, useNavigate, useLocation, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { User } from './types';
 import { SupportWidget } from './components/SupportWidget';
 import { SocialBarAd } from './components/SocialBarAd';
@@ -33,18 +33,46 @@ const AktiLogo = () => (
   </div>
 );
 
+const PendingApprovalView: React.FC<{ user: User }> = ({ user }) => (
+  <div className="min-h-[80vh] flex flex-col items-center justify-center p-6 text-center animate-fadeIn">
+    <div className="relative mb-12">
+      <div className="absolute inset-0 bg-rose-600/20 blur-[100px] rounded-full animate-pulse"></div>
+      <div className="relative bg-slate-900 border-4 border-rose-500/50 w-32 h-32 md:w-40 md:h-40 rounded-full flex items-center justify-center shadow-2xl">
+        <svg className="w-16 h-16 md:w-20 md:h-20 text-rose-500 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A10.003 10.003 0 0112 3c1.72 0 3.347.433 4.775 1.2a10 10 0 014.472 8.528c0 2.304-.775 4.428-2.083 6.13M12 11c0-3.314 2.686-6 6-6s6 2.686 6 6-2.686 6-6 6-6-2.686-6-6zm-6 2c0 1.657-1.343 3-3 3s-3-1.343-3-3 1.343-3 3-3 3 1.343 3 3z" />
+        </svg>
+      </div>
+    </div>
+    <h1 className="text-4xl md:text-5xl font-black text-white tracking-tighter mb-4 uppercase">Identity <span className="text-rose-500">Scanning</span></h1>
+    <p className="text-slate-400 max-w-md mx-auto font-medium leading-relaxed mb-8">
+      Welcome, Citizen <span className="text-white font-bold">{user.displayName}</span>. Your dossier is being reviewed by Akti High Command. Access will be granted once your signal is synchronized.
+    </p>
+    <div className="flex flex-col items-center gap-6">
+      <div className="px-6 py-2 bg-slate-900 border border-rose-500/30 rounded-full inline-flex items-center gap-3">
+        <div className="w-2 h-2 bg-rose-500 rounded-full animate-ping"></div>
+        <span className="text-[10px] font-black text-rose-400 uppercase tracking-[0.2em]">Verification In Progress</span>
+      </div>
+      <button onClick={() => signOut(auth)} className="text-slate-600 hover:text-white text-[10px] font-black uppercase tracking-widest transition-colors">Disconnect Signal</button>
+    </div>
+  </div>
+);
+
 const MobileBottomNav: React.FC<{ activeUser: User | null }> = ({ activeUser }) => {
   const location = useLocation();
-  if (!activeUser) return null;
+  if (!activeUser || activeUser.accountStatus !== 'active') return null;
   const isActive = (path: string) => location.pathname === path || (path !== '/' && location.pathname.startsWith(path));
+  const isPremium = activeUser.role !== 'user';
 
   return (
     <div className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-[94%] glass-effect border border-white/10 p-2 rounded-3xl flex items-center justify-around shadow-2xl">
       <Link to="/" className={`p-3 rounded-2xl transition-all ${isActive('/') ? 'bg-rose-500/20 text-rose-400' : 'text-slate-500'}`}>
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 6h16M4 12h16M4 18h16" /></svg>
       </Link>
-      <Link to="/chat" className={`p-3 rounded-2xl transition-all ${isActive('/chat') ? 'bg-indigo-500/20 text-indigo-400' : 'text-slate-500'}`}>
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
+      <Link to={isPremium ? "/chat" : "/pro"} className={`p-3 rounded-2xl transition-all ${isActive('/chat') ? 'bg-indigo-500/20 text-indigo-400' : 'text-slate-500'}`}>
+        <div className="relative">
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
+          {!isPremium && <div className="absolute -top-1 -right-1 w-2 h-2 bg-amber-500 rounded-full border border-slate-950"></div>}
+        </div>
       </Link>
       <Link to="/pro" className={`p-3 rounded-2xl transition-all ${isActive('/pro') ? 'bg-amber-500/20 text-amber-400' : 'text-slate-500'}`}>
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
@@ -70,20 +98,27 @@ const App: React.FC = () => {
 
     const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
-        const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
-        if (userDoc.exists()) {
-          const data = userDoc.data() as User;
-          const userEmail = (firebaseUser.email || '').trim().toLowerCase();
-          if (userEmail === ADMIN_EMAIL.trim().toLowerCase() && data.role !== 'admin') {
-            const updated = { ...data, role: 'admin', isPro: true };
-            setCurrentUser(updated as User);
-            await updateDoc(doc(db, 'users', firebaseUser.uid), { role: 'admin', isPro: true });
-          } else {
-            setCurrentUser(data);
+        // Setup real-time listener for current user to catch approval state changes immediately
+        const userRef = doc(db, 'users', firebaseUser.uid);
+        const unsubscribeUser = onSnapshot(userRef, async (userDoc) => {
+          if (userDoc.exists()) {
+            const data = userDoc.data() as User;
+            const userEmail = (firebaseUser.email || '').trim().toLowerCase();
+            if (userEmail === ADMIN_EMAIL.trim().toLowerCase() && (data.role !== 'admin' || data.accountStatus !== 'active')) {
+              const updated = { ...data, role: 'admin', isPro: true, accountStatus: 'active' };
+              setCurrentUser(updated as User);
+              await updateDoc(userRef, { role: 'admin', isPro: true, accountStatus: 'active' });
+            } else {
+              setCurrentUser(data);
+            }
           }
-        }
-      } else { setCurrentUser(null); }
-      setLoading(false);
+          setLoading(false);
+        });
+        return () => unsubscribeUser();
+      } else {
+        setCurrentUser(null);
+        setLoading(false);
+      }
     });
     
     return () => { unsubscribeSettings(); unsubscribeAuth(); };
@@ -104,6 +139,9 @@ const App: React.FC = () => {
     );
   }
 
+  const isApproved = currentUser?.accountStatus === 'active' || currentUser?.role === 'admin';
+  const isPremium = currentUser?.role !== 'user';
+
   return (
     <Router>
       <SocialBarAd />
@@ -111,11 +149,16 @@ const App: React.FC = () => {
         <nav className="sticky top-0 z-40 glass-effect border-b border-white/5 px-6 py-4 flex items-center justify-between shadow-xl">
           <Link to="/"><AktiLogo /></Link>
           
-          <div className="hidden md:flex items-center gap-8">
-            <Link to="/" className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-rose-500 transition-colors">Grid</Link>
-            <Link to="/chat" className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-indigo-400 transition-colors">Transmit</Link>
-            <Link to="/pro" className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-amber-400 transition-colors">Elite</Link>
-          </div>
+          {isApproved && (
+            <div className="hidden md:flex items-center gap-8">
+              <Link to="/" className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-rose-500 transition-colors">Overview</Link>
+              <Link to={isPremium ? "/chat" : "/pro"} className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-indigo-400 transition-colors flex items-center gap-2">
+                Transmit
+                {!isPremium && <span className="bg-amber-500 w-1 h-1 rounded-full shadow-[0_0_8px_rgba(245,158,11,0.5)]"></span>}
+              </Link>
+              <Link to="/pro" className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-amber-400 transition-colors">Elite</Link>
+            </div>
+          )}
 
           <div className="flex items-center gap-4">
             {currentUser ? (
@@ -139,12 +182,16 @@ const App: React.FC = () => {
         
         <div className="flex-1 container mx-auto max-w-6xl px-4 py-8">
           <Routes>
-            <Route path="/" element={currentUser ? <FeedView user={currentUser} /> : <Navigate to="/auth" />} />
+            <Route path="/" element={
+              currentUser ? (
+                isApproved ? <FeedView user={currentUser} /> : <PendingApprovalView user={currentUser} />
+              ) : <Navigate to="/auth" />
+            } />
             <Route path="/auth" element={!currentUser ? <AuthView /> : <Navigate to="/" />} />
-            <Route path="/profile/:uid" element={currentUser ? <ProfileView activeUser={currentUser} /> : <Navigate to="/auth" />} />
-            <Route path="/chat" element={currentUser ? <ChatView activeUser={currentUser} /> : <Navigate to="/auth" />} />
-            <Route path="/chat/:chatId" element={currentUser ? <ChatView activeUser={currentUser} /> : <Navigate to="/auth" />} />
-            <Route path="/pro" element={currentUser ? <UpgradeView activeUser={currentUser} /> : <Navigate to="/auth" />} />
+            <Route path="/profile/:uid" element={currentUser ? (isApproved ? <ProfileView activeUser={currentUser} /> : <PendingApprovalView user={currentUser} />) : <Navigate to="/auth" />} />
+            <Route path="/chat" element={currentUser ? (isApproved ? (isPremium ? <ChatView activeUser={currentUser} /> : <Navigate to="/pro" />) : <PendingApprovalView user={currentUser} />) : <Navigate to="/auth" />} />
+            <Route path="/chat/:chatId" element={currentUser ? (isApproved ? (isPremium ? <ChatView activeUser={currentUser} /> : <Navigate to="/pro" />) : <PendingApprovalView user={currentUser} />) : <Navigate to="/auth" />} />
+            <Route path="/pro" element={currentUser ? (isApproved ? <UpgradeView activeUser={currentUser} /> : <PendingApprovalView user={currentUser} />) : <Navigate to="/auth" />} />
             <Route path="/admin" element={currentUser?.role === 'admin' ? <AdminView activeUser={currentUser} /> : <Navigate to="/" />} />
             <Route path="*" element={<Navigate to="/" />} />
           </Routes>
