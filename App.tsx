@@ -17,17 +17,17 @@ import { doc, getDoc, updateDoc, onSnapshot } from 'firebase/firestore';
 
 const ADMIN_EMAIL = 'rakibulislamrovin@gmail.com';
 
-const AktiLogo = () => (
+const SecureHLogo = () => (
   <div className="flex items-center gap-3 group">
     <div className="relative">
       <div className="absolute -inset-1 bg-rose-600 rounded-xl blur opacity-30 group-hover:opacity-100 transition duration-1000"></div>
       <div className="relative bg-slate-950 border border-rose-500/50 text-white w-10 h-10 rounded-xl font-black text-xl flex items-center justify-center shadow-2xl transform group-hover:rotate-6 transition-all">
-        <span className="relative z-10">A</span>
+        <span className="relative z-10">S</span>
         <div className="absolute inset-0 bg-gradient-to-tr from-rose-600/20 to-transparent"></div>
       </div>
     </div>
     <div className="flex flex-col">
-      <span className="font-black text-[12px] tracking-[0.2em] text-white uppercase leading-none">Akti <span className="text-rose-500">Elite</span></span>
+      <span className="font-black text-[12px] tracking-[0.2em] text-white uppercase leading-none">Secure<span className="text-rose-500">H</span></span>
       <span className="text-[7px] font-black text-slate-500 uppercase tracking-[0.4em] mt-1">Signal Hub</span>
     </div>
   </div>
@@ -45,7 +45,7 @@ const PendingApprovalView: React.FC<{ user: User }> = ({ user }) => (
     </div>
     <h1 className="text-4xl md:text-5xl font-black text-white tracking-tighter mb-4 uppercase">Identity <span className="text-rose-500">Scanning</span></h1>
     <p className="text-slate-400 max-w-md mx-auto font-medium leading-relaxed mb-8">
-      Welcome, Citizen <span className="text-white font-bold">{user.displayName}</span>. Your dossier is being reviewed by Akti High Command. Access will be granted once your signal is synchronized.
+      Welcome, Citizen <span className="text-white font-bold">{user.displayName}</span>. Your dossier is being reviewed by SecureH High Command. Access will be granted once your signal is synchronized.
     </p>
     <div className="flex flex-col items-center gap-6">
       <div className="px-6 py-2 bg-slate-900 border border-rose-500/30 rounded-full inline-flex items-center gap-3">
@@ -147,7 +147,7 @@ const App: React.FC = () => {
       <SocialBarAd />
       <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
         <nav className="sticky top-0 z-40 glass-effect border-b border-white/5 px-6 py-4 flex items-center justify-between shadow-xl">
-          <Link to="/"><AktiLogo /></Link>
+          <Link to="/"><SecureHLogo /></Link>
           
           {isApproved && (
             <div className="hidden md:flex items-center gap-8">

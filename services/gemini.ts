@@ -15,14 +15,14 @@ export const generateBio = async (interests: string): Promise<string> => {
       contents: `Write a creative, short social media bio based on these interests: ${interests}. Keep it under 150 characters. No hashtags.`,
     });
     // Access the generated text directly from the response.text property.
-    return response.text?.trim() || "I am a new Akti Forum member!";
+    return response.text?.trim() || "I am a new SecureH member!";
   } catch (err: any) {
     // If the request fails with an error indicating the API key might be missing or invalid, prompt the user to select one.
     if (err.message?.includes("Requested entity was not found") && (window as any).aistudio?.openSelectKey) {
       (window as any).aistudio.openSelectKey();
     }
     console.error("Gemini Bio Error:", err);
-    return "Exploring the digital frontier of Akti Forum.";
+    return "Exploring the digital frontier of SecureH.";
   }
 };
 
@@ -36,7 +36,7 @@ export const getSupportResponse = async (queryText: string): Promise<string> => 
       model: 'gemini-3-flash-preview',
       contents: queryText,
       config: {
-        systemInstruction: "You are Akti Assistant, a helpful support bot for the Akti Forum. Help users with forum features like posting, liking, upgrading to Pro via Binance, and managing their profiles. Be concise and friendly.",
+        systemInstruction: "You are SecureH Assistant, a helpful support bot for the SecureH Forum. Help users with forum features like posting, liking, upgrading to Pro via Binance, and managing their profiles. Be concise and friendly.",
       }
     });
     // Access the generated text directly from the response.text property.

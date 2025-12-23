@@ -54,7 +54,7 @@ const AuthView: React.FC = () => {
           displayName,
           email: email.toLowerCase(),
           photoURL: photoURL,
-          bio: isAdmin ? 'Akti Forum Official Administrator' : 'Newly joined mature member.',
+          bio: isAdmin ? 'SecureH Forum Official Administrator' : 'Newly joined mature member.',
           isPro: isAdmin,
           role: isAdmin ? 'admin' : 'user',
           accountStatus: isAdmin ? 'active' : 'pending', // Gatekeeper: All users start as pending
@@ -85,7 +85,7 @@ const AuthView: React.FC = () => {
         <div className="absolute -top-24 -right-24 w-48 h-48 bg-rose-600/10 rounded-full blur-3xl"></div>
 
         <div className="text-center mb-10 relative">
-          <div className="bg-rose-600 text-white w-20 h-20 rounded-[1.8rem] font-bold text-4xl flex items-center justify-center mx-auto mb-6 shadow-2xl shadow-rose-600/40">A</div>
+          <div className="bg-rose-600 text-white w-20 h-20 rounded-[1.8rem] font-bold text-4xl flex items-center justify-center mx-auto mb-6 shadow-2xl shadow-rose-600/40">S</div>
           <h2 className="text-3xl font-black text-slate-100 tracking-tight uppercase">{isLogin ? 'Citizen Login' : 'Register Signal'}</h2>
           <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mt-2">{isLogin ? 'Access the community terminal' : 'Create your unique identity node'}</p>
         </div>

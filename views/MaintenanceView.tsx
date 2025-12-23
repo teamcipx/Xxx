@@ -19,7 +19,7 @@ const MaintenanceView: React.FC = () => {
       </h1>
       
       <p className="text-slate-400 max-w-md mx-auto font-medium leading-relaxed mb-8">
-        The Akti High Command is currently recalibrating the network nodes. Normal transmission will resume shortly.
+        The SecureH High Command is currently recalibrating the network nodes. Normal transmission will resume shortly.
       </p>
       
       <div className="flex flex-col items-center gap-4">
@@ -29,7 +29,7 @@ const MaintenanceView: React.FC = () => {
         </div>
         
         <p className="text-slate-600 text-[9px] font-bold uppercase tracking-widest mt-12">
-          &copy; {new Date().getFullYear()} Akti Forum Network
+          &copy; {new Date().getFullYear()} SecureH Forum Network
         </p>
       </div>
     </div>

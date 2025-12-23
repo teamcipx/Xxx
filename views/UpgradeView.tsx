@@ -51,7 +51,7 @@ const UpgradeView: React.FC<{ activeUser: User }> = ({ activeUser }) => {
         imageUrl: imageUrl || null,
         status: 'pending',
         createdAt: Date.now(),
-        plan: 'Akti Premium Lifetime'
+        plan: 'SecureH Premium Lifetime'
       });
 
       setSuccess(true);
@@ -108,15 +108,15 @@ const UpgradeView: React.FC<{ activeUser: User }> = ({ activeUser }) => {
           <div className="relative">
              <div className="absolute -top-10 -right-4 bg-rose-600 text-white text-[12px] font-black px-6 py-3 rounded-2xl shadow-2xl rotate-12 uppercase tracking-tighter animate-pulse border-2 border-slate-950">Special: $0.50</div>
              <h2 className="text-xl font-black text-indigo-400 uppercase tracking-tight">Step 1: Send Payment</h2>
-             <p className="text-slate-500 text-xs mt-2 font-medium">Please transfer exactly <span className="text-white font-bold">$0.50 USD</span> to the official Akti wallet.</p>
+             <p className="text-slate-500 text-xs mt-2 font-medium">Please transfer exactly <span className="text-white font-bold">$0.50 USD</span> to the official SecureH wallet.</p>
           </div>
 
           <div className="space-y-4">
             <div className="bg-slate-950/60 p-5 rounded-2xl border border-white/5 group">
               <p className="text-[9px] font-black text-slate-600 uppercase tracking-widest mb-2">Binance ID / Wallet</p>
               <div className="flex items-center justify-between">
-                <code className="text-indigo-300 font-mono text-sm">AKT-PREMIUM-NODE-88</code>
-                <button onClick={() => navigator.clipboard.writeText('AKT-PREMIUM-NODE-88')} className="text-slate-500 hover:text-white transition-colors">
+                <code className="text-indigo-300 font-mono text-sm">SH-PREMIUM-NODE-88</code>
+                <button onClick={() => navigator.clipboard.writeText('SH-PREMIUM-NODE-88')} className="text-slate-500 hover:text-white transition-colors">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" /></svg>
                 </button>
               </div>
