@@ -1,6 +1,9 @@
 
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Link, useNavigate, useLocation, Navigate } from 'react-router-dom';
+// Use namespace import and cast to any to resolve "no exported member" compiler errors
+import * as ReactRouterDOM from 'react-router-dom';
+const { HashRouter: Router, Routes, Route, Link, useNavigate, useLocation, Navigate } = ReactRouterDOM as any;
+
 import { User } from './types';
 import { SupportWidget } from './components/SupportWidget';
 import { SocialBarAd } from './components/SocialBarAd';
@@ -10,6 +13,7 @@ import ChatView from './views/ChatView';
 import UpgradeView from './views/UpgradeView';
 import AuthView from './views/AuthView';
 import AdminView from './views/AdminView';
+import OverviewView from './views/OverviewView';
 import MaintenanceView from './views/MaintenanceView';
 import { auth, db } from './services/firebase';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
@@ -66,6 +70,9 @@ const MobileBottomNav: React.FC<{ activeUser: User | null }> = ({ activeUser }) 
   return (
     <div className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-[94%] glass-effect border border-white/10 p-2 rounded-3xl flex items-center justify-around shadow-2xl">
       <Link to="/" className={`p-3 rounded-2xl transition-all ${isActive('/') ? 'bg-rose-500/20 text-rose-400' : 'text-slate-500'}`}>
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
+      </Link>
+      <Link to="/community" className={`p-3 rounded-2xl transition-all ${isActive('/community') ? 'bg-rose-500/20 text-rose-400' : 'text-slate-500'}`}>
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 6h16M4 12h16M4 18h16" /></svg>
       </Link>
       <Link to={isPremium ? "/chat" : "/pro"} className={`p-3 rounded-2xl transition-all ${isActive('/chat') ? 'bg-indigo-500/20 text-indigo-400' : 'text-slate-500'}`}>
@@ -76,9 +83,6 @@ const MobileBottomNav: React.FC<{ activeUser: User | null }> = ({ activeUser }) 
       </Link>
       <Link to="/pro" className={`p-3 rounded-2xl transition-all ${isActive('/pro') ? 'bg-amber-500/20 text-amber-400' : 'text-slate-500'}`}>
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-      </Link>
-      <Link to={`/profile/${activeUser.uid}`} className={`p-1 rounded-2xl transition-all ${isActive(`/profile/${activeUser.uid}`) ? 'ring-2 ring-rose-500/50' : 'opacity-60'}`}>
-        <img src={activeUser.photoURL} alt="p" className="w-9 h-9 rounded-xl object-cover" />
       </Link>
     </div>
   );
@@ -98,7 +102,6 @@ const App: React.FC = () => {
 
     const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
-        // Setup real-time listener for current user to catch approval state changes immediately
         const userRef = doc(db, 'users', firebaseUser.uid);
         const unsubscribeUser = onSnapshot(userRef, async (userDoc) => {
           if (userDoc.exists()) {
@@ -149,16 +152,19 @@ const App: React.FC = () => {
         <nav className="sticky top-0 z-40 glass-effect border-b border-white/5 px-6 py-4 flex items-center justify-between shadow-xl">
           <Link to="/"><SecureHLogo /></Link>
           
-          {isApproved && (
-            <div className="hidden md:flex items-center gap-8">
-              <Link to="/" className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-rose-500 transition-colors">Overview</Link>
-              <Link to={isPremium ? "/chat" : "/pro"} className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-indigo-400 transition-colors flex items-center gap-2">
-                Transmit
-                {!isPremium && <span className="bg-amber-500 w-1 h-1 rounded-full shadow-[0_0_8px_rgba(245,158,11,0.5)]"></span>}
-              </Link>
-              <Link to="/pro" className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-amber-400 transition-colors">Elite</Link>
-            </div>
-          )}
+          <div className="hidden md:flex items-center gap-8">
+            <Link to="/" className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-rose-500 transition-colors">Overview</Link>
+            {isApproved && (
+              <>
+                <Link to="/community" className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-rose-500 transition-colors">Community</Link>
+                <Link to={isPremium ? "/chat" : "/pro"} className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-indigo-400 transition-colors flex items-center gap-2">
+                  Transmit
+                  {!isPremium && <span className="bg-amber-500 w-1 h-1 rounded-full shadow-[0_0_8px_rgba(245,158,11,0.5)]"></span>}
+                </Link>
+              </>
+            )}
+            <Link to="/pro" className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-amber-400 transition-colors">Elite</Link>
+          </div>
 
           <div className="flex items-center gap-4">
             {currentUser ? (
@@ -182,11 +188,8 @@ const App: React.FC = () => {
         
         <div className="flex-1 container mx-auto max-w-6xl px-4 py-8">
           <Routes>
-            <Route path="/" element={
-              currentUser ? (
-                isApproved ? <FeedView user={currentUser} /> : <PendingApprovalView user={currentUser} />
-              ) : <Navigate to="/auth" />
-            } />
+            <Route path="/" element={<OverviewView activeUser={currentUser} />} />
+            <Route path="/community" element={currentUser ? (isApproved ? <FeedView user={currentUser} /> : <PendingApprovalView user={currentUser} />) : <Navigate to="/auth" />} />
             <Route path="/auth" element={!currentUser ? <AuthView /> : <Navigate to="/" />} />
             <Route path="/profile/:uid" element={currentUser ? (isApproved ? <ProfileView activeUser={currentUser} /> : <PendingApprovalView user={currentUser} />) : <Navigate to="/auth" />} />
             <Route path="/chat" element={currentUser ? (isApproved ? (isPremium ? <ChatView activeUser={currentUser} /> : <Navigate to="/pro" />) : <PendingApprovalView user={currentUser} />) : <Navigate to="/auth" />} />

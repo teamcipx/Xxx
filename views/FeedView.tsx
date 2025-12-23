@@ -2,7 +2,10 @@
 import React, { useState, useEffect } from 'react';
 import { User, Post, Comment, PostType } from '../types';
 import { uploadToImgBB } from '../services/imgbb';
-import { Link, useNavigate } from 'react-router-dom';
+// Use namespace import and cast to any to resolve "no exported member" compiler errors
+import * as ReactRouterDOM from 'react-router-dom';
+const { Link, useNavigate } = ReactRouterDOM as any;
+
 import { db } from '../services/firebase';
 import { AdsterraAd } from '../components/AdsterraAd';
 import { UserBadge } from '../components/UserBadge';
@@ -20,22 +23,9 @@ import {
   arrayRemove 
 } from 'firebase/firestore';
 
-const TruncatedText: React.FC<{ text: string; limit: number; isRestricted: boolean }> = ({ text, limit, isRestricted }) => {
+const TruncatedText: React.FC<{ text: string; limit: number }> = ({ text, limit }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const shouldTruncate = text.length > limit;
-
-  if (isRestricted) {
-    return (
-      <div className="relative group/lock cursor-pointer" onClick={() => window.location.hash = '/pro'}>
-        <p className="text-sm text-slate-600 leading-relaxed blur-sm select-none">
-          {text.substring(0, 100)}...
-        </p>
-        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/lock:opacity-100 transition-opacity">
-          <span className="bg-rose-600 text-white text-[8px] font-black uppercase px-3 py-1.5 rounded-lg shadow-xl tracking-widest">Upgrade to Decrypt Signal</span>
-        </div>
-      </div>
-    );
-  }
 
   if (!shouldTruncate) return <p className="text-sm text-slate-300 leading-relaxed whitespace-pre-wrap">{text}</p>;
 
@@ -54,7 +44,7 @@ const TruncatedText: React.FC<{ text: string; limit: number; isRestricted: boole
   );
 };
 
-const CommentSection: React.FC<{ postId: string; user: User; isRestricted: boolean }> = ({ postId, user, isRestricted }) => {
+const CommentSection: React.FC<{ postId: string; user: User }> = ({ postId, user }) => {
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState('');
   const [loading, setLoading] = useState(false);
@@ -70,10 +60,6 @@ const CommentSection: React.FC<{ postId: string; user: User; isRestricted: boole
   }, [postId]);
 
   const handleAddComment = async () => {
-    if (isRestricted) {
-      navigate('/pro');
-      return;
-    }
     if (!newComment.trim()) return;
     setLoading(true);
     try {
@@ -99,7 +85,7 @@ const CommentSection: React.FC<{ postId: string; user: User; isRestricted: boole
           value={newComment}
           onChange={(e) => setNewComment(e.target.value)}
           onKeyPress={(e) => e.key === 'Enter' && handleAddComment()}
-          placeholder={isRestricted ? "Upgrade to transmit thought..." : "Transmit your thought..."}
+          placeholder="Transmit your thought..."
           className="flex-1 bg-slate-900 border border-white/5 rounded-xl px-4 py-2 text-[11px] font-medium focus:outline-none focus:border-rose-500/40"
         />
         <button onClick={handleAddComment} disabled={loading} className="bg-rose-600 p-2.5 rounded-xl text-white shadow-lg shadow-rose-600/20 active:scale-95 transition-all">
@@ -186,10 +172,6 @@ const FeedView: React.FC<{ user: User }> = ({ user }) => {
   };
 
   const handleLike = async (post: Post) => {
-    if (!isPremium) {
-      navigate('/pro');
-      return;
-    }
     const isLiked = post.likes.includes(user.uid);
     await updateDoc(doc(db, 'posts', post.id), {
       likes: isLiked ? arrayRemove(user.uid) : arrayUnion(user.uid),
@@ -198,10 +180,6 @@ const FeedView: React.FC<{ user: User }> = ({ user }) => {
   };
 
   const handleDislike = async (post: Post) => {
-    if (!isPremium) {
-      navigate('/pro');
-      return;
-    }
     const isDisliked = post.dislikes.includes(user.uid);
     await updateDoc(doc(db, 'posts', post.id), {
       dislikes: isDisliked ? arrayRemove(user.uid) : arrayUnion(user.uid),
@@ -211,27 +189,27 @@ const FeedView: React.FC<{ user: User }> = ({ user }) => {
 
   return (
     <div className="max-w-3xl mx-auto space-y-10 animate-fadeIn">
-      {/* Overview Context Header */}
+      {/* Community Context Header */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-2">
         <div>
-          <h1 className="text-3xl font-black text-white uppercase tracking-tighter">Community Overview</h1>
-          <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.3em] mt-1">Real-time Signal Sync</p>
+          <h1 className="text-3xl font-black text-white uppercase tracking-tighter">Community Wall</h1>
+          <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.3em] mt-1">Real-time Community Signals</p>
         </div>
         {!isPremium && (
           <Link to="/pro" className="bg-amber-500/10 border border-amber-500/20 text-amber-500 px-5 py-2.5 rounded-2xl text-[9px] font-black uppercase tracking-widest hover:bg-amber-500/20 transition-all flex items-center gap-2">
             <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
-            Upgrade to Premium Access
+            Decrypt Media with Premium
           </Link>
         )}
       </div>
 
-      {/* Creation Protocol */}
+      {/* Creation Protocol - Premium Only */}
       <div className={`glass-effect rounded-[2.5rem] p-6 md:p-10 border border-white/10 shadow-2xl relative overflow-hidden group transition-all ${!isPremium ? 'opacity-50 grayscale' : ''}`}>
         {!isPremium && (
           <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-slate-950/40 backdrop-blur-sm p-6 text-center">
-             <h3 className="text-white font-black uppercase tracking-tighter text-xl mb-2">Basic Tier Node</h3>
-             <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-6 max-w-[200px]">Transmission protocol restricted to premium signals</p>
-             <button onClick={() => navigate('/pro')} className="bg-rose-600 text-white px-8 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest shadow-xl shadow-rose-600/40">Unlock Transmission</button>
+             <h3 className="text-white font-black uppercase tracking-tighter text-xl mb-2">Basic Node Restriction</h3>
+             <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-6 max-w-[200px]">Signal broadcasting is reserved for premium accounts</p>
+             <button onClick={() => navigate('/pro')} className="bg-rose-600 text-white px-8 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest shadow-xl shadow-rose-600/40">Broadcasting Privileges</button>
           </div>
         )}
         <div className="absolute top-0 right-0 w-32 h-32 bg-rose-600/5 rounded-full blur-3xl -translate-y-10 translate-x-10"></div>
@@ -276,13 +254,6 @@ const FeedView: React.FC<{ user: User }> = ({ user }) => {
           </div>
         </div>
 
-        {selectedFile && (
-          <div className="mt-6 relative inline-block ml-18 md:ml-20">
-            <img src={URL.createObjectURL(selectedFile)} alt="p" className="max-h-60 rounded-3xl border border-white/10 shadow-2xl" />
-            <button onClick={() => setSelectedFile(null)} className="absolute -top-3 -right-3 bg-red-600 text-white p-2 rounded-full shadow-lg hover:scale-110 transition-transform"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" /></svg></button>
-          </div>
-        )}
-
         <div className="flex items-center justify-between mt-8 ml-18 md:ml-20 border-t border-white/5 pt-6">
           <label className="flex items-center gap-3 cursor-pointer text-slate-500 hover:text-rose-400 transition-colors group">
             <div className="w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center border border-white/5 group-hover:border-rose-500/30 transition-all">
@@ -312,16 +283,6 @@ const FeedView: React.FC<{ user: User }> = ({ user }) => {
             <div className="w-10 h-10 border-4 border-rose-600 border-t-transparent rounded-full animate-spin shadow-xl shadow-rose-600/20"></div>
             <p className="text-slate-600 text-[9px] font-black uppercase tracking-[0.8em] animate-pulse">Syncing Content Grid</p>
           </div>
-        ) : posts.length === 0 ? (
-          <div className="py-32 flex flex-col items-center text-center space-y-6">
-            <div className="w-20 h-20 bg-slate-900 rounded-3xl flex items-center justify-center border border-white/5 text-slate-700">
-               <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
-            </div>
-            <div>
-              <h3 className="text-lg font-black text-slate-400 uppercase tracking-widest">No Active Signals</h3>
-              <p className="text-slate-600 text-[10px] font-bold uppercase tracking-[0.2em] mt-1">Be the first to update the grid</p>
-            </div>
-          </div>
         ) : (
           posts.map((post, idx) => (
             <React.Fragment key={post.id}>
@@ -350,7 +311,7 @@ const FeedView: React.FC<{ user: User }> = ({ user }) => {
                     <h3 className="text-2xl font-black text-white tracking-tighter mb-4 leading-tight group-hover:text-rose-500 transition-colors uppercase">{post.title}</h3>
                   )}
 
-                  <TruncatedText text={post.content} limit={35} isRestricted={!isPremium} />
+                  <TruncatedText text={post.content} limit={35} />
 
                   {post.imageUrl && (
                     <div className={`rounded-[2rem] overflow-hidden border border-white/5 bg-slate-950 mt-8 relative group/img ${!isPremium ? 'grayscale blur-md select-none' : ''}`}>
@@ -384,7 +345,7 @@ const FeedView: React.FC<{ user: User }> = ({ user }) => {
                       {post.commentsCount} Signals
                     </button>
                   </div>
-                  {openComments[post.id] && <CommentSection postId={post.id} user={user} isRestricted={!isPremium} />}
+                  {openComments[post.id] && <CommentSection postId={post.id} user={user} />}
                 </div>
               </div>
             </React.Fragment>

@@ -2,7 +2,10 @@
 import React, { useState, useEffect } from 'react';
 import { User, Post, Gender } from '../types';
 import { generateBio } from '../services/gemini';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+// Use namespace import and cast to any to resolve "no exported member" compiler errors
+import * as ReactRouterDOM from 'react-router-dom';
+const { useParams, useNavigate, Link } = ReactRouterDOM as any;
+
 import { db } from '../services/firebase';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { AdsterraAd } from '../components/AdsterraAd';
