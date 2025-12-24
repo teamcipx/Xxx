@@ -24,7 +24,8 @@ const OverviewView: React.FC<{ activeUser: User | null }> = ({ activeUser }) => 
     <div className="max-w-5xl mx-auto space-y-16 animate-fadeIn pb-24">
       {/* Hero Section */}
       <section className="text-center space-y-8 relative py-12">
-        <AdsterraAd id="overview-hero-top" format="banner" className="mb-6" />
+        <AdsterraAd id="overview-hero-top-1" format="banner" className="mb-2" />
+        <AdsterraAd id="overview-hero-top-2" format="banner" className="mb-6" />
         <div className="absolute inset-0 bg-rose-600/5 blur-[120px] rounded-full -z-10 animate-pulse"></div>
         <div className="inline-flex items-center gap-3 px-6 py-2 bg-slate-900 border border-rose-500/20 rounded-full">
           <div className="w-2 h-2 bg-green-500 rounded-full animate-ping"></div>
@@ -56,8 +57,11 @@ const OverviewView: React.FC<{ activeUser: User | null }> = ({ activeUser }) => 
             {t('dossier')}
           </a>
         </div>
-        <AdsterraAd id="overview-hero-bottom" format="banner" className="mt-8" />
+        <AdsterraAd id="overview-hero-bottom-1" format="banner" className="mt-8" />
+        <AdsterraAd id="overview-hero-bottom-2" format="banner" className="mt-2" />
       </section>
+
+      <AdsterraAd id="overview-spacer-1" format="banner" />
 
       {/* Stats Grid */}
       <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -89,6 +93,8 @@ const OverviewView: React.FC<{ activeUser: User | null }> = ({ activeUser }) => 
 
       <AdsterraAd id="overview-mid-1" format="banner" />
       <AdsterraAd id="overview-mid-2" format="banner" />
+      <AdsterraAd id="overview-mid-3" format="banner" />
+      <AdsterraAd id="overview-mid-native" format="native" />
 
       {/* About Section */}
       <section id="about" className="glass-effect rounded-[3rem] p-10 md:p-16 border border-white/10 relative overflow-hidden">
@@ -138,6 +144,9 @@ const OverviewView: React.FC<{ activeUser: User | null }> = ({ activeUser }) => 
 
       <AdsterraAd id="overview-bottom-banner-1" format="banner" />
       <AdsterraAd id="overview-bottom-banner-2" format="banner" />
+      <AdsterraAd id="overview-bottom-banner-3" format="banner" />
+      <AdsterraAd id="overview-bottom-banner-4" format="banner" />
+      <AdsterraAd id="overview-bottom-native" format="native" />
       
       <footer className="text-center py-10 border-t border-white/5">
          <p className="text-slate-600 text-[10px] font-black uppercase tracking-[0.5em]">

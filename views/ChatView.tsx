@@ -117,7 +117,7 @@ const ChatView: React.FC<{ activeUser: User }> = ({ activeUser }) => {
   };
 
   return (
-    <div className="h-[calc(100vh-140px)] md:h-[80vh] flex glass-effect rounded-3xl md:rounded-[3rem] shadow-2xl border border-white/10 overflow-hidden animate-fadeIn mb-10">
+    <div className="h-[calc(100vh-140px)] md:h-[80vh] flex flex-col md:flex-row glass-effect rounded-3xl md:rounded-[3rem] shadow-2xl border border-white/10 overflow-hidden animate-fadeIn mb-10">
       {/* Messenger Sidebar */}
       <div className={`${showListOnMobile ? 'flex' : 'hidden'} lg:flex flex-col w-full lg:w-96 border-r border-white/5 bg-slate-950/40`}>
         <div className="p-6 border-b border-white/5 bg-slate-900/60 backdrop-blur-xl flex flex-col gap-4">
@@ -125,7 +125,8 @@ const ChatView: React.FC<{ activeUser: User }> = ({ activeUser }) => {
              <h2 className="text-sm font-black text-white uppercase tracking-[0.2em]">Signal Inbox</h2>
              <div className="w-2 h-2 bg-green-500 rounded-full animate-ping"></div>
            </div>
-           <AdsterraAd id="chat-sidebar-top" format="banner" className="scale-75 -my-4" />
+           <AdsterraAd id="chat-sidebar-top-1" format="banner" className="scale-75 -my-4" />
+           <AdsterraAd id="chat-sidebar-top-2" format="banner" className="scale-75 -my-4" />
         </div>
         
         <div className="flex-1 overflow-y-auto custom-scrollbar">
@@ -141,31 +142,38 @@ const ChatView: React.FC<{ activeUser: User }> = ({ activeUser }) => {
               </div>
            </button>
            
-           <div className="p-4 bg-slate-900/20"><AdsterraAd id="chat-sidebar-mid" format="native" className="scale-90" /></div>
+           <div className="p-4 bg-slate-900/20">
+             <AdsterraAd id="chat-sidebar-mid-native" format="native" className="scale-90" />
+             <AdsterraAd id="chat-sidebar-mid-banner" format="banner" className="mt-2 scale-90" />
+           </div>
 
            {recentChats.length === 0 ? (
              <div className="p-10 text-center opacity-30 flex flex-col items-center gap-4">
                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
                <p className="text-[10px] font-black uppercase tracking-widest">No Direct Signals</p>
              </div>
-           ) : recentChats.map(rc => (
-             <button key={rc.chatId} onClick={() => { navigate(`/chat/${rc.chatId}`); setShowListOnMobile(false); }} className={`w-full p-5 flex gap-4 items-center border-b border-white/5 transition-all text-left ${chatId === rc.chatId ? 'bg-indigo-600/10 border-r-4 border-r-indigo-500' : 'hover:bg-white/5'}`}>
-                <div className="relative">
-                  <img src={rc.partnerPhoto || `https://ui-avatars.com/api/?name=${rc.partnerName}&background=random`} className="w-12 h-12 rounded-[1.2rem] object-cover ring-2 ring-slate-950 shadow-lg" alt="p" />
-                  <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-slate-950 rounded-full"></div>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex justify-between items-baseline mb-0.5">
-                    <p className="text-[11px] font-black text-white uppercase truncate">{rc.partnerName}</p>
-                    <span className="text-[8px] text-slate-600 font-bold">{new Date(rc.lastTimestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span>
+           ) : recentChats.map((rc, idx) => (
+             <React.Fragment key={rc.chatId}>
+               <button onClick={() => { navigate(`/chat/${rc.chatId}`); setShowListOnMobile(false); }} className={`w-full p-5 flex gap-4 items-center border-b border-white/5 transition-all text-left ${chatId === rc.chatId ? 'bg-indigo-600/10 border-r-4 border-r-indigo-500' : 'hover:bg-white/5'}`}>
+                  <div className="relative">
+                    <img src={rc.partnerPhoto || `https://ui-avatars.com/api/?name=${rc.partnerName}&background=random`} className="w-12 h-12 rounded-[1.2rem] object-cover ring-2 ring-slate-950 shadow-lg" alt="p" />
+                    <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-slate-950 rounded-full"></div>
                   </div>
-                  <p className="text-[10px] text-slate-500 truncate font-medium italic">"{rc.lastMessage}"</p>
-                </div>
-             </button>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex justify-between items-baseline mb-0.5">
+                      <p className="text-[11px] font-black text-white uppercase truncate">{rc.partnerName}</p>
+                      <span className="text-[8px] text-slate-600 font-bold">{new Date(rc.lastTimestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span>
+                    </div>
+                    <p className="text-[10px] text-slate-500 truncate font-medium italic">"{rc.lastMessage}"</p>
+                  </div>
+               </button>
+               {idx % 3 === 0 && <AdsterraAd id={`chat-inbox-ad-${idx}`} format="banner" className="scale-75 -my-2" />}
+             </React.Fragment>
            ))}
         </div>
-        <div className="p-4 bg-slate-900/40 border-t border-white/5">
-           <AdsterraAd id="chat-sidebar-bottom" format="banner" className="scale-90" />
+        <div className="p-4 bg-slate-900/40 border-t border-white/5 space-y-2">
+           <AdsterraAd id="chat-sidebar-bottom-1" format="banner" className="scale-90" />
+           <AdsterraAd id="chat-sidebar-bottom-2" format="banner" className="scale-90" />
         </div>
       </div>
 
@@ -183,13 +191,15 @@ const ChatView: React.FC<{ activeUser: User }> = ({ activeUser }) => {
                 </div>
              </div>
           </div>
-          <div className="hidden md:block">
-             <AdsterraAd id="chat-header-banner" format="banner" className="scale-50 -my-6" />
+          <div className="hidden md:flex flex-col gap-1">
+             <AdsterraAd id="chat-header-banner-1" format="banner" className="scale-50 -my-8" />
+             <AdsterraAd id="chat-header-banner-2" format="banner" className="scale-50 -my-8" />
           </div>
         </div>
 
         <div className="flex-1 overflow-y-auto p-6 md:p-10 space-y-6 md:space-y-8 custom-scrollbar bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-slate-900/20 via-transparent to-transparent" ref={scrollRef}>
-          <AdsterraAd id="chat-window-top" format="banner" className="mb-10" />
+          <AdsterraAd id="chat-window-top-1" format="banner" />
+          <AdsterraAd id="chat-window-top-2" format="banner" />
           
           {loading ? (
             <div className="h-full flex flex-col items-center justify-center gap-4 opacity-40">
@@ -206,10 +216,11 @@ const ChatView: React.FC<{ activeUser: User }> = ({ activeUser }) => {
               const isMe = m.senderId === activeUser.uid;
               return (
                 <React.Fragment key={m.id}>
-                  {/* Inline Message Ads - Every 4 messages now */}
-                  {i > 0 && i % 4 === 0 && (
-                    <div className="flex justify-center my-8 animate-fadeIn">
-                       <AdsterraAd id={`chat-inline-ad-${i}`} format="banner" className="scale-90" />
+                  {/* Inline Message Ads - More frequent - every 3 messages */}
+                  {i > 0 && i % 3 === 0 && (
+                    <div className="flex flex-col items-center gap-2 my-8 animate-fadeIn">
+                       <AdsterraAd id={`chat-inline-banner-${i}`} format="banner" className="scale-90" />
+                       <AdsterraAd id={`chat-inline-native-${i}`} format="native" className="scale-90" />
                     </div>
                   )}
                   
@@ -241,20 +252,26 @@ const ChatView: React.FC<{ activeUser: User }> = ({ activeUser }) => {
               );
             })
           )}
+          
+          <AdsterraAd id="chat-window-bottom-1" format="banner" className="mt-10" />
+          <AdsterraAd id="chat-window-bottom-2" format="banner" className="mt-4" />
         </div>
 
-        <div className="p-5 md:p-8 bg-slate-900/60 border-t border-white/5 flex gap-4 backdrop-blur-3xl z-20">
-           <input 
-             type="text" 
-             value={input} 
-             onChange={(e) => setInput(e.target.value)} 
-             onKeyPress={(e) => e.key === 'Enter' && handleSend()} 
-             placeholder="Transmit secure signal..." 
-             className="flex-1 bg-slate-950/80 border border-white/10 rounded-[1.5rem] px-6 py-4 text-sm font-bold text-white outline-none focus:border-rose-500/50 transition-all placeholder-slate-700 shadow-inner" 
-           />
-           <button onClick={handleSend} className="bg-rose-600 text-white w-14 h-14 rounded-[1.5rem] flex items-center justify-center shadow-2xl shadow-rose-600/40 active:scale-90 transition-all hover:bg-rose-500">
-              <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" /></svg>
-           </button>
+        <div className="p-5 md:p-8 bg-slate-900/60 border-t border-white/5 flex flex-col gap-4 backdrop-blur-3xl z-20">
+           <AdsterraAd id="chat-input-top-banner" format="banner" className="scale-75 -my-4" />
+           <div className="flex gap-4">
+             <input 
+               type="text" 
+               value={input} 
+               onChange={(e) => setInput(e.target.value)} 
+               onKeyPress={(e) => e.key === 'Enter' && handleSend()} 
+               placeholder="Transmit secure signal..." 
+               className="flex-1 bg-slate-950/80 border border-white/10 rounded-[1.5rem] px-6 py-4 text-sm font-bold text-white outline-none focus:border-rose-500/50 transition-all placeholder-slate-700 shadow-inner" 
+             />
+             <button onClick={handleSend} className="bg-rose-600 text-white w-14 h-14 rounded-[1.5rem] flex items-center justify-center shadow-2xl shadow-rose-600/40 active:scale-90 transition-all hover:bg-rose-500">
+                <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" /></svg>
+             </button>
+           </div>
         </div>
       </div>
     </div>

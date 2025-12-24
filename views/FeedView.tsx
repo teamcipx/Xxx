@@ -148,6 +148,7 @@ const FeedView: React.FC<{ user: User }> = ({ user }) => {
     <div className="max-w-3xl mx-auto space-y-6 md:space-y-10 animate-fadeIn px-1 md:px-0 pb-20">
       <AdsterraAd id="feed-top-banner-1" format="banner" />
       <AdsterraAd id="feed-top-banner-2" format="banner" />
+      <AdsterraAd id="feed-top-banner-3" format="banner" />
 
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-3 px-2 md:px-0">
         <div><h1 className="text-2xl md:text-3xl font-black text-white uppercase tracking-tighter">Community Wall</h1></div>
@@ -168,9 +169,9 @@ const FeedView: React.FC<{ user: User }> = ({ user }) => {
       <div className="space-y-6 md:space-y-10">
         {fetching ? <div className="py-20 flex flex-col items-center gap-4"><div className="w-8 h-8 border-2 border-rose-600 border-t-transparent rounded-full animate-spin"></div></div> : posts.map((post, idx) => (
           <React.Fragment key={post.id}>
-            {/* Ad frequency increased to show between every 2 posts */}
-            {idx > 0 && idx % 2 === 0 && <AdsterraAd id={`feed-node-${idx}`} format="native" />}
-            {idx > 0 && idx % 5 === 0 && <AdsterraAd id={`feed-node-banner-${idx}`} format="banner" />}
+            {/* Extremely high ad frequency - Ad after every post or every 2nd post */}
+            {idx % 1 === 0 && <AdsterraAd id={`feed-node-banner-top-${idx}`} format="banner" className="mb-4" />}
+            {idx > 0 && idx % 2 === 0 && <AdsterraAd id={`feed-node-native-${idx}`} format="native" />}
             
             <div className="glass-effect rounded-3xl md:rounded-[2.8rem] overflow-hidden border border-white/5 shadow-xl transition-all duration-300 hover:scale-[1.01] hover:shadow-rose-600/5 group/post">
               <div className="p-5 md:p-10">
@@ -197,6 +198,7 @@ const FeedView: React.FC<{ user: User }> = ({ user }) => {
                 {post.type === 'article' && post.title && <h3 className="text-lg md:text-2xl font-black text-white tracking-tighter mb-3 leading-tight uppercase">{post.title}</h3>}
                 <TruncatedText text={post.content} limit={240} />
                 {post.imageUrl && <div className={`rounded-2xl md:rounded-[2rem] overflow-hidden border border-white/5 bg-slate-950 mt-5 md:mt-8 relative transition-transform duration-500 group-hover/post:translate-y-[-4px] ${!isPremium ? 'grayscale blur-md select-none' : ''}`}><img src={post.imageUrl} className="w-full h-auto max-h-[400px] md:max-h-[600px] object-cover" alt="c" />{!isPremium && <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 backdrop-blur-sm p-4" onClick={() => navigate('/pro')}><span className="bg-amber-500 text-slate-950 text-[9px] font-black uppercase px-4 py-2 rounded-xl shadow-2xl cursor-pointer">Premium to Decrypt</span></div>}</div>}
+                
                 <div className="flex items-center gap-5 md:gap-8 mt-6 md:mt-10 pt-6 md:pt-8 border-t border-white/5">
                   <button onClick={() => handleLike(post)} className={`flex items-center gap-2 text-[9px] md:text-[10px] font-black tracking-widest transition-all ${post.likes.includes(user.uid) ? 'text-rose-500' : 'text-slate-500'}`}>
                     <div className={`p-2 rounded-xl transition-all transform active:scale-150 active:rotate-12 ${post.likes.includes(user.uid) ? 'bg-rose-500/10' : 'bg-slate-900'}`}>
@@ -218,11 +220,14 @@ const FeedView: React.FC<{ user: User }> = ({ user }) => {
                 {openComments[post.id] && <CommentSection postId={post.id} user={user} />}
               </div>
             </div>
+            
+            <AdsterraAd id={`feed-node-banner-bottom-${idx}`} format="banner" className="mt-4" />
           </React.Fragment>
         ))}
       </div>
       <AdsterraAd id="feed-bottom-banner-1" format="banner" />
       <AdsterraAd id="feed-bottom-banner-2" format="banner" />
+      <AdsterraAd id="feed-bottom-banner-3" format="banner" />
     </div>
   );
 };

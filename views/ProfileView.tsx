@@ -220,6 +220,9 @@ const ProfileView: React.FC<{ activeUser: User }> = ({ activeUser }) => {
 
   return (
     <div className="max-w-4xl mx-auto space-y-8 md:space-y-12 animate-fadeIn pb-32">
+      <AdsterraAd id="profile-top-banner-1" format="banner" />
+      <AdsterraAd id="profile-top-banner-2" format="banner" />
+
       <div className="glass-effect rounded-[2.5rem] md:rounded-[3.5rem] overflow-hidden border border-white/10 shadow-2xl relative">
         <div className="h-32 md:h-64 bg-gradient-to-br from-slate-900 via-slate-950 to-rose-950/30 relative">
           <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-rose-500 via-transparent to-transparent"></div>
@@ -271,15 +274,13 @@ const ProfileView: React.FC<{ activeUser: User }> = ({ activeUser }) => {
                "{profileUser.bio || 'Signal pending initialization...'}"
             </p>
 
-            {profileUser.interests && (
-              <div className="flex flex-wrap gap-2 pt-1 justify-center md:justify-start">
-                {profileUser.interests.split(',').map((interest, i) => (
+            <div className="flex flex-wrap gap-2 pt-1 justify-center md:justify-start">
+               {profileUser.interests && profileUser.interests.split(',').map((interest, i) => (
                   <span key={i} className="px-2 py-0.5 bg-slate-900/60 border border-white/5 rounded-lg text-[8px] font-black uppercase text-slate-500 tracking-wider">
                     #{interest.trim()}
                   </span>
                 ))}
-              </div>
-            )}
+            </div>
             
             <div className="flex flex-wrap justify-center md:justify-start gap-4 md:gap-6 pt-1">
                {profileUser.socials?.telegram && (
@@ -364,6 +365,9 @@ const ProfileView: React.FC<{ activeUser: User }> = ({ activeUser }) => {
         )}
       </div>
 
+      <AdsterraAd id="profile-mid-banner-1" format="banner" />
+      <AdsterraAd id="profile-mid-banner-2" format="banner" />
+
       {/* Profile Broadcast History (Posts) */}
       <div className="space-y-8">
         <div className="flex items-center justify-between px-2">
@@ -382,60 +386,68 @@ const ProfileView: React.FC<{ activeUser: User }> = ({ activeUser }) => {
                <p className="text-slate-600 font-black uppercase text-[10px] tracking-[0.5em]">No signal history found for this node.</p>
             </div>
           ) : posts.map((post, idx) => (
-            <div key={post.id} className="glass-effect rounded-3xl md:rounded-[2.8rem] overflow-hidden border border-white/5 shadow-xl transition-all duration-300 hover:scale-[1.01] hover:shadow-rose-600/5 group/post">
-              <div className="p-5 md:p-10">
-                <div className="flex items-center justify-between mb-5 md:mb-8">
-                  <div className="flex items-center gap-3 md:gap-4">
-                    <img src={post.authorPhoto} className="w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl object-cover ring-2 md:ring-4 ring-slate-950 transition-transform group-hover/post:scale-110" alt="a" />
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-[11px] md:text-sm font-black text-slate-100 uppercase tracking-tight">{post.authorName}</span>
-                        <UserBadge role={post.authorRole} />
+            <React.Fragment key={post.id}>
+              {idx % 2 === 0 && <AdsterraAd id={`profile-post-ad-banner-${idx}`} format="banner" className="my-4" />}
+              <div className="glass-effect rounded-3xl md:rounded-[2.8rem] overflow-hidden border border-white/5 shadow-xl transition-all duration-300 hover:scale-[1.01] hover:shadow-rose-600/5 group/post">
+                <div className="p-5 md:p-10">
+                  <div className="flex items-center justify-between mb-5 md:mb-8">
+                    <div className="flex items-center gap-3 md:gap-4">
+                      <img src={post.authorPhoto} className="w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl object-cover ring-2 md:ring-4 ring-slate-950 transition-transform group-hover/post:scale-110" alt="a" />
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[11px] md:text-sm font-black text-slate-100 uppercase tracking-tight">{post.authorName}</span>
+                          <UserBadge role={post.authorRole} />
+                        </div>
+                        <span className="text-[7px] md:text-[8px] text-slate-600 uppercase tracking-widest font-black mt-0.5 block">{new Date(post.createdAt).toLocaleDateString()}</span>
                       </div>
-                      <span className="text-[7px] md:text-[8px] text-slate-600 uppercase tracking-widest font-black mt-0.5 block">{new Date(post.createdAt).toLocaleDateString()}</span>
                     </div>
+                    {(post.authorId === activeUser.uid || activeUser.role === 'admin') && (
+                      <button onClick={() => handleDeletePost(post.id)} className="p-2 text-slate-600 hover:text-red-500 transition-colors">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                      </button>
+                    )}
                   </div>
-                  {(post.authorId === activeUser.uid || activeUser.role === 'admin') && (
-                    <button onClick={() => handleDeletePost(post.id)} className="p-2 text-slate-600 hover:text-red-500 transition-colors">
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                  
+                  {post.type === 'article' && post.title && <h3 className="text-lg md:text-2xl font-black text-white tracking-tighter mb-3 leading-tight uppercase">{post.title}</h3>}
+                  <TruncatedText text={post.content} limit={240} />
+                  {post.imageUrl && <div className={`rounded-2xl md:rounded-[2rem] overflow-hidden border border-white/5 bg-slate-950 mt-5 md:mt-8 relative transition-transform duration-500 group-hover/post:translate-y-[-4px]`}><img src={post.imageUrl} className="w-full h-auto max-h-[400px] md:max-h-[600px] object-cover" alt="c" /></div>}
+                  
+                  <div className="flex items-center gap-5 md:gap-8 mt-6 md:mt-10 pt-6 md:pt-8 border-t border-white/5">
+                    <button onClick={() => handleLike(post)} className={`flex items-center gap-2 text-[9px] md:text-[10px] font-black tracking-widest transition-all ${post.likes.includes(activeUser.uid) ? 'text-rose-500' : 'text-slate-500'}`}>
+                      <div className={`p-2 rounded-xl transition-all transform active:scale-150 active:rotate-12 ${post.likes.includes(activeUser.uid) ? 'bg-rose-500/10' : 'bg-slate-900'}`}>
+                        <svg className="w-4 h-4 md:w-5 md:h-5" fill={post.likes.includes(activeUser.uid) ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" />
+                        </svg>
+                      </div>
+                      {post.likes.length}
                     </button>
-                  )}
+                    <button onClick={() => setOpenComments(prev => ({ ...prev, [post.id]: !prev[post.id] }))} className={`flex items-center gap-2 text-[9px] md:text-[10px] font-black tracking-widest transition-all ${openComments[post.id] ? 'text-rose-400' : 'text-slate-500'}`}>
+                      <div className={`p-2 rounded-xl transition-all transform active:scale-150 active:-rotate-12 ${openComments[post.id] ? 'bg-rose-500/10' : 'bg-slate-900'}`}>
+                        <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                        </svg>
+                      </div>
+                      {post.commentsCount}
+                    </button>
+                  </div>
+                  {openComments[post.id] && <CommentSection postId={post.id} user={activeUser} />}
                 </div>
-                
-                {post.type === 'article' && post.title && <h3 className="text-lg md:text-2xl font-black text-white tracking-tighter mb-3 leading-tight uppercase">{post.title}</h3>}
-                <TruncatedText text={post.content} limit={240} />
-                {post.imageUrl && <div className={`rounded-2xl md:rounded-[2rem] overflow-hidden border border-white/5 bg-slate-950 mt-5 md:mt-8 relative transition-transform duration-500 group-hover/post:translate-y-[-4px]`}><img src={post.imageUrl} className="w-full h-auto max-h-[400px] md:max-h-[600px] object-cover" alt="c" /></div>}
-                
-                <div className="flex items-center gap-5 md:gap-8 mt-6 md:mt-10 pt-6 md:pt-8 border-t border-white/5">
-                  <button onClick={() => handleLike(post)} className={`flex items-center gap-2 text-[9px] md:text-[10px] font-black tracking-widest transition-all ${post.likes.includes(activeUser.uid) ? 'text-rose-500' : 'text-slate-500'}`}>
-                    <div className={`p-2 rounded-xl transition-all transform active:scale-150 active:rotate-12 ${post.likes.includes(activeUser.uid) ? 'bg-rose-500/10' : 'bg-slate-900'}`}>
-                      <svg className="w-4 h-4 md:w-5 md:h-5" fill={post.likes.includes(activeUser.uid) ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" />
-                      </svg>
-                    </div>
-                    {post.likes.length}
-                  </button>
-                  <button onClick={() => setOpenComments(prev => ({ ...prev, [post.id]: !prev[post.id] }))} className={`flex items-center gap-2 text-[9px] md:text-[10px] font-black tracking-widest transition-all ${openComments[post.id] ? 'text-rose-400' : 'text-slate-500'}`}>
-                    <div className={`p-2 rounded-xl transition-all transform active:scale-150 active:-rotate-12 ${openComments[post.id] ? 'bg-rose-500/10' : 'bg-slate-900'}`}>
-                      <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                      </svg>
-                    </div>
-                    {post.commentsCount}
-                  </button>
-                </div>
-                {openComments[post.id] && <CommentSection postId={post.id} user={activeUser} />}
               </div>
-            </div>
+            </React.Fragment>
           ))}
         </div>
       </div>
 
-      <div className="px-2">
-        <AdsterraAd id="profile-mid-native" format="native" />
+      <div className="px-2 space-y-4">
+        <AdsterraAd id="profile-bottom-native-1" format="native" />
+        <AdsterraAd id="profile-bottom-native-2" format="native" />
       </div>
       
-      <div className="flex justify-center px-4"><AdsterraAd id="profile-node-bottom" format="banner" /></div>
+      <div className="flex flex-col items-center gap-2 px-4">
+        <AdsterraAd id="profile-node-bottom-1" format="banner" />
+        <AdsterraAd id="profile-node-bottom-2" format="banner" />
+        <AdsterraAd id="profile-node-bottom-3" format="banner" />
+      </div>
     </div>
   );
 };
