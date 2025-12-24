@@ -419,7 +419,7 @@ const App: React.FC = () => {
                 <Route path="/auth" element={!currentUser ? <AuthView /> : <Navigate to="/" />} />
                 <Route path="/profile/:uid" element={currentUser ? (isApproved ? <ProfileView activeUser={currentUser} /> : <PendingApprovalView user={currentUser} />) : <Navigate to="/auth" />} />
                 <Route path="/chat" element={currentUser ? (isApproved ? (isPremium ? <ChatView activeUser={currentUser} /> : <Navigate to="/pro" />) : <PendingApprovalView user={currentUser} />) : <Navigate to="/auth" />} />
-                <Route path="/chat/:chatId" element={currentUser ? (isApproved ? (isPremium ? <ChatView activeUser={currentUser} /> : <Navigate to="/pro" />) : <Navigate to="/auth" />} />
+                <Route path="/chat/:chatId" element={currentUser ? (isApproved ? (isPremium ? <ChatView activeUser={currentUser} /> : <Navigate to="/pro" />) : <PendingApprovalView user={currentUser} />) : <Navigate to="/auth" />} />
                 <Route path="/pro" element={currentUser ? (isApproved ? <UpgradeView activeUser={currentUser} /> : <PendingApprovalView user={currentUser} />) : <Navigate to="/auth" />} />
                 <Route path="/admin" element={currentUser?.role === 'admin' ? <AdminView activeUser={currentUser} /> : <Navigate to="/" />} />
                 <Route path="*" element={<Navigate to="/" />} />
