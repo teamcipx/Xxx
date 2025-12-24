@@ -146,7 +146,8 @@ const FeedView: React.FC<{ user: User }> = ({ user }) => {
 
   return (
     <div className="max-w-3xl mx-auto space-y-6 md:space-y-10 animate-fadeIn px-1 md:px-0 pb-20">
-      <AdsterraAd id="feed-top-banner" format="banner" />
+      <AdsterraAd id="feed-top-banner-1" format="banner" />
+      <AdsterraAd id="feed-top-banner-2" format="banner" />
 
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-3 px-2 md:px-0">
         <div><h1 className="text-2xl md:text-3xl font-black text-white uppercase tracking-tighter">Community Wall</h1></div>
@@ -167,7 +168,10 @@ const FeedView: React.FC<{ user: User }> = ({ user }) => {
       <div className="space-y-6 md:space-y-10">
         {fetching ? <div className="py-20 flex flex-col items-center gap-4"><div className="w-8 h-8 border-2 border-rose-600 border-t-transparent rounded-full animate-spin"></div></div> : posts.map((post, idx) => (
           <React.Fragment key={post.id}>
-            {idx > 0 && idx % 4 === 0 && <AdsterraAd id={`feed-node-${idx}`} format="native" />}
+            {/* Ad frequency increased to show between every 2 posts */}
+            {idx > 0 && idx % 2 === 0 && <AdsterraAd id={`feed-node-${idx}`} format="native" />}
+            {idx > 0 && idx % 5 === 0 && <AdsterraAd id={`feed-node-banner-${idx}`} format="banner" />}
+            
             <div className="glass-effect rounded-3xl md:rounded-[2.8rem] overflow-hidden border border-white/5 shadow-xl transition-all duration-300 hover:scale-[1.01] hover:shadow-rose-600/5 group/post">
               <div className="p-5 md:p-10">
                 <div className="flex items-center justify-between mb-5 md:mb-8">
@@ -217,7 +221,8 @@ const FeedView: React.FC<{ user: User }> = ({ user }) => {
           </React.Fragment>
         ))}
       </div>
-      <AdsterraAd id="feed-bottom" format="banner" />
+      <AdsterraAd id="feed-bottom-banner-1" format="banner" />
+      <AdsterraAd id="feed-bottom-banner-2" format="banner" />
     </div>
   );
 };

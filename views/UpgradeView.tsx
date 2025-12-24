@@ -10,6 +10,7 @@ import * as ReactRouterDOM from 'react-router-dom';
 const { useNavigate } = ReactRouterDOM as any;
 
 const TELEGRAM_SUPPORT = 'https://t.me/securehx';
+const WALLET_ADDRESS = 'TGV7bGirJhqCtj2c8DtLM42r45kQeUsiYV';
 
 const UpgradeView: React.FC<{ activeUser: User }> = ({ activeUser }) => {
   const { lang } = useLang();
@@ -19,6 +20,7 @@ const UpgradeView: React.FC<{ activeUser: User }> = ({ activeUser }) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [pendingTx, setPendingTx] = useState<Transaction | null>(null);
   const [success, setSuccess] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     const q = query(
@@ -35,6 +37,12 @@ const UpgradeView: React.FC<{ activeUser: User }> = ({ activeUser }) => {
     });
     return unsubscribe;
   }, [activeUser.uid]);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(WALLET_ADDRESS);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   const handleSubmitPayment = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -125,11 +133,15 @@ const UpgradeView: React.FC<{ activeUser: User }> = ({ activeUser }) => {
 
           <div className="space-y-4">
             <div className="bg-slate-950/60 p-5 rounded-2xl border border-white/5 group">
-              <p className="text-[9px] font-black text-slate-600 uppercase tracking-widest mb-2">Binance ID / Wallet</p>
-              <div className="flex items-center justify-between">
-                <code className="text-indigo-300 font-mono text-sm">SH-PREMIUM-NODE-88</code>
-                <button onClick={() => navigator.clipboard.writeText('SH-PREMIUM-NODE-88')} className="text-slate-500 hover:text-white transition-colors">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" /></svg>
+              <p className="text-[9px] font-black text-slate-600 uppercase tracking-widest mb-2">USDT (TRC20) Wallet</p>
+              <div className="flex items-center justify-between gap-3">
+                <code className="text-indigo-300 font-mono text-[11px] md:text-sm break-all">{WALLET_ADDRESS}</code>
+                <button onClick={handleCopy} className={`shrink-0 transition-all ${copied ? 'text-green-500 scale-110' : 'text-slate-500 hover:text-white'}`}>
+                  {copied ? (
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
+                  ) : (
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" /></svg>
+                  )}
                 </button>
               </div>
             </div>
