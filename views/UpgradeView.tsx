@@ -4,17 +4,19 @@ import { User, Transaction } from '../types';
 import { db } from '../services/firebase';
 import { collection, addDoc, query, where, onSnapshot } from 'firebase/firestore';
 import { uploadToImgBB } from '../services/imgbb';
+import { useLang } from '../App';
+import { AdsterraAd } from '../components/AdsterraAd';
 
 const TELEGRAM_SUPPORT = 'https://t.me/securehx';
 
 const UpgradeView: React.FC<{ activeUser: User }> = ({ activeUser }) => {
+  const { lang } = useLang();
   const [loading, setLoading] = useState(false);
   const [txId, setTxId] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [pendingTx, setPendingTx] = useState<Transaction | null>(null);
   const [success, setSuccess] = useState(false);
 
-  // Check if user already has a pending transaction
   useEffect(() => {
     const q = query(
       collection(db, 'transactions'),
@@ -34,7 +36,7 @@ const UpgradeView: React.FC<{ activeUser: User }> = ({ activeUser }) => {
   const handleSubmitPayment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!txId.trim() && !selectedFile) {
-      alert("Please provide a Transaction ID or Screenshot.");
+      alert(lang === 'bn' ? "দয়া করে ট্রান্সজেকশন আইডি অথবা স্ক্রিনশট দিন।" : "Please provide a Transaction ID or Screenshot.");
       return;
     }
 
@@ -60,11 +62,21 @@ const UpgradeView: React.FC<{ activeUser: User }> = ({ activeUser }) => {
       setTxId('');
       setSelectedFile(null);
     } catch (err) {
-      console.error(err);
-      alert("Submission failed. Please try again.");
+      alert(lang === 'bn' ? "ব্যর্থ হয়েছে। আবার চেষ্টা করুন।" : "Submission failed. Please try again.");
     } finally {
       setLoading(false);
     }
+  };
+
+  const t_upgrade = {
+    title: lang === 'bn' ? 'আপনার সিগন্যাল আপগ্রেড করুন' : 'UPGRADE YOUR SIGNAL',
+    sub: lang === 'bn' ? 'পূর্ণ ট্রান্সমিশন সুবিধা, মিডিয়া ডিক্রিপশন এবং গ্লোবাল চ্যাট নোড আনলক করুন।' : 'Unlock full transmission privileges, media decryption, and global chat nodes.',
+    step1: lang === 'bn' ? 'ধাপ ১: পেমেন্ট পাঠান' : 'Step 1: Send Payment',
+    step2: lang === 'bn' ? 'ধাপ ২: প্রমাণ জমা দিন' : 'Step 2: Submit Proof',
+    amount: lang === 'bn' ? 'ঠিক $০.৫০ ডলার SecureH ওয়ালেটে পাঠান।' : 'Please transfer exactly $0.50 USD to the official SecureH wallet.',
+    placeholder: lang === 'bn' ? 'TxID লিখুন...' : 'Enter TxID (e.g. 293842...)',
+    button: lang === 'bn' ? 'ভেরিফিকেশন অনুরোধ পাঠান' : 'Request Verification',
+    already: lang === 'bn' ? 'আপনি ইতিমধ্যে একজন প্রিমিয়াম সদস্য।' : 'You are already a Premium Member.'
   };
 
   if (activeUser.role === 'premium' || activeUser.role === 'pro' || activeUser.role === 'admin') {
@@ -73,9 +85,9 @@ const UpgradeView: React.FC<{ activeUser: User }> = ({ activeUser }) => {
         <div className="bg-amber-500 w-20 h-20 rounded-full flex items-center justify-center mx-auto shadow-lg shadow-amber-500/50">
           <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
         </div>
-        <h2 className="text-3xl font-black text-white tracking-tight">CITIZEN ELITE</h2>
-        <p className="text-slate-400 font-medium">You are already a Premium Member. All exclusive channels and features are unlocked for your signal.</p>
-        <button onClick={() => window.location.hash = '/'} className="bg-slate-800 hover:bg-slate-700 text-white px-8 py-3 rounded-2xl font-black uppercase tracking-widest text-[10px] transition-all">Return to Feed</button>
+        <h2 className="text-3xl font-black text-white tracking-tight uppercase">CITIZEN ELITE</h2>
+        <p className="text-slate-400 font-medium">{t_upgrade.already}</p>
+        <button onClick={() => window.location.hash = '/'} className="bg-slate-800 hover:bg-slate-700 text-white px-8 py-3 rounded-2xl font-black uppercase tracking-widest text-[10px] transition-all">{lang === 'bn' ? 'ফিরে যান' : 'Return'}</button>
       </div>
     );
   }
@@ -86,14 +98,9 @@ const UpgradeView: React.FC<{ activeUser: User }> = ({ activeUser }) => {
         <div className="bg-indigo-600 w-20 h-20 rounded-full flex items-center justify-center mx-auto shadow-lg shadow-indigo-600/50 animate-pulse">
           <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
         </div>
-        <h2 className="text-3xl font-black text-white tracking-tight uppercase">Verification Pending</h2>
-        <p className="text-slate-400 font-medium leading-relaxed">Your payment information has been transmitted to the High Command. If you have issues, contact us at <a href={TELEGRAM_SUPPORT} target="_blank" rel="noreferrer" className="text-indigo-400 underline">Telegram</a>.</p>
-        <div className="bg-slate-900/50 p-4 rounded-2xl border border-white/5 inline-block mx-auto">
-          <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Status: Waiting for Admin Approval</p>
-        </div>
-        <div className="pt-4">
-          <button onClick={() => window.location.hash = '/'} className="text-indigo-400 text-[10px] font-black uppercase tracking-widest hover:underline">Back to Community</button>
-        </div>
+        <h2 className="text-3xl font-black text-white tracking-tight uppercase">{lang === 'bn' ? 'অপেক্ষা করুন' : 'Verification Pending'}</h2>
+        <p className="text-slate-400 font-medium leading-relaxed">{lang === 'bn' ? 'আপনার পেমেন্ট তথ্য হাই কমান্ডে পাঠানো হয়েছে।' : 'Your payment info has been transmitted to High Command.'}</p>
+        <AdsterraAd id="upgrade-pending-ad" format="banner" className="scale-90" />
       </div>
     );
   }
@@ -101,16 +108,16 @@ const UpgradeView: React.FC<{ activeUser: User }> = ({ activeUser }) => {
   return (
     <div className="max-w-4xl mx-auto space-y-12 animate-fadeIn">
       <div className="text-center space-y-4">
-        <h1 className="text-4xl md:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-amber-600">UPGRADE YOUR SIGNAL</h1>
-        <p className="text-slate-400 max-w-2xl mx-auto font-medium">Unlock full transmission privileges, media decryption, and global chat nodes for a nominal fee.</p>
+        <h1 className="text-4xl md:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-amber-600">{t_upgrade.title}</h1>
+        <p className="text-slate-400 max-w-2xl mx-auto font-medium">{t_upgrade.sub}</p>
       </div>
 
       <div className="grid lg:grid-cols-2 gap-8">
         <div className="glass-effect rounded-[2.5rem] p-8 border border-white/5 space-y-8">
           <div className="relative">
              <div className="absolute -top-10 -right-4 bg-rose-600 text-white text-[12px] font-black px-6 py-3 rounded-2xl shadow-2xl rotate-12 uppercase tracking-tighter animate-pulse border-2 border-slate-950">Special: $0.50</div>
-             <h2 className="text-xl font-black text-indigo-400 uppercase tracking-tight">Step 1: Send Payment</h2>
-             <p className="text-slate-500 text-xs mt-2 font-medium">Please transfer exactly <span className="text-white font-bold">$0.50 USD</span> to the official SecureH wallet.</p>
+             <h2 className="text-xl font-black text-indigo-400 uppercase tracking-tight">{t_upgrade.step1}</h2>
+             <p className="text-slate-500 text-xs mt-2 font-medium">{t_upgrade.amount}</p>
           </div>
 
           <div className="space-y-4">
@@ -124,7 +131,7 @@ const UpgradeView: React.FC<{ activeUser: User }> = ({ activeUser }) => {
               </div>
             </div>
             <div className="p-4 bg-amber-500/5 rounded-2xl border border-amber-500/10">
-              <p className="text-[10px] text-amber-500/80 leading-relaxed font-medium italic">"Ensure you capture a screenshot of your success screen or copy the Transaction ID. For help, message <a href={TELEGRAM_SUPPORT} target="_blank" rel="noreferrer" className="underline font-bold">@securehx</a> on Telegram."</p>
+              <p className="text-[10px] text-amber-500/80 leading-relaxed font-medium italic">"Ensure you capture a screenshot of your success screen. For help, message <a href={TELEGRAM_SUPPORT} target="_blank" rel="noreferrer" className="underline font-bold">@securehx</a> on Telegram."</p>
             </div>
           </div>
         </div>
@@ -132,7 +139,7 @@ const UpgradeView: React.FC<{ activeUser: User }> = ({ activeUser }) => {
         <div className="glass-effect rounded-[2.5rem] p-8 border border-white/10 shadow-2xl relative">
           <div className="absolute -top-3 right-8 bg-amber-500 text-white text-[9px] font-black uppercase px-4 py-1.5 rounded-full shadow-lg">Verification Hub</div>
           
-          <h2 className="text-xl font-black text-slate-100 uppercase tracking-tight mb-6">Step 2: Submit Proof</h2>
+          <h2 className="text-xl font-black text-slate-100 uppercase tracking-tight mb-6">{t_upgrade.step2}</h2>
           
           <form onSubmit={handleSubmitPayment} className="space-y-6">
             <div>
@@ -141,38 +148,9 @@ const UpgradeView: React.FC<{ activeUser: User }> = ({ activeUser }) => {
                 type="text"
                 value={txId}
                 onChange={(e) => setTxId(e.target.value)}
-                placeholder="Enter TxID (e.g. 293842...)"
+                placeholder={t_upgrade.placeholder}
                 className="w-full bg-slate-900/60 border border-white/5 rounded-2xl px-5 py-4 text-slate-100 placeholder-slate-700 focus:outline-none focus:ring-2 focus:ring-amber-500/40 transition-all font-medium"
               />
-            </div>
-
-            <div>
-              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3 ml-1">Payment Screenshot</label>
-              <div className="relative">
-                <input 
-                  type="file" 
-                  id="screenshot"
-                  accept="image/*"
-                  onChange={(e) => e.target.files && setSelectedFile(e.target.files[0])}
-                  className="hidden" 
-                />
-                <label 
-                  htmlFor="screenshot"
-                  className="w-full flex flex-col items-center justify-center p-6 bg-slate-900/40 border-2 border-dashed border-white/5 rounded-2xl cursor-pointer hover:bg-slate-900 hover:border-amber-500/30 transition-all group"
-                >
-                  {selectedFile ? (
-                    <div className="text-center">
-                      <p className="text-amber-400 text-xs font-bold">{selectedFile.name}</p>
-                      <p className="text-slate-500 text-[10px] uppercase mt-1">Image Ready for Upload</p>
-                    </div>
-                  ) : (
-                    <>
-                      <svg className="w-8 h-8 text-slate-700 mb-2 group-hover:text-amber-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                      <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Select Proof Image</p>
-                    </>
-                  )}
-                </label>
-              </div>
             </div>
 
             <button
@@ -183,11 +161,12 @@ const UpgradeView: React.FC<{ activeUser: User }> = ({ activeUser }) => {
               {loading ? (
                 <div className="animate-spin h-5 w-5 border-2 border-slate-900 border-t-transparent rounded-full"></div>
               ) : (
-                'Request Verification'
+                t_upgrade.button
               )}
             </button>
           </form>
-          <p className="mt-4 text-center text-[10px] font-black text-slate-600 uppercase tracking-widest">Only Telegram support at <a href={TELEGRAM_SUPPORT} target="_blank" rel="noreferrer" className="text-indigo-400 underline">t.me/securehx</a></p>
+          {/* Ad within the premium form area */}
+          <AdsterraAd id="upgrade-form-ad" format="banner" className="mt-6 scale-90" />
         </div>
       </div>
     </div>

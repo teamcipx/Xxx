@@ -4,6 +4,7 @@ export type Gender = 'Male' | 'Female' | 'Other' | 'Prefer not to say';
 export type VerificationStatus = 'none' | 'pending' | 'verified' | 'rejected';
 export type AccountStatus = 'pending' | 'active' | 'banned';
 export type PostType = 'standard' | 'article';
+export type Language = 'en' | 'bn';
 
 export interface User {
   uid: string;
@@ -19,6 +20,8 @@ export interface User {
   joinedAt: number;
   age?: number;
   gender?: Gender;
+  country?: string;
+  language?: Language;
   interests?: string;
   socials?: {
     twitter?: string;
