@@ -35,7 +35,10 @@ const translations = {
     support: "Contact Support via Telegram",
     disconnect: "Disconnect Signal",
     establishing: "Establishing Signal Link",
-    welcome: "Welcome, Citizen"
+    welcome: "Welcome, Citizen",
+    profile: "Profile Node",
+    logout: "Exit Grid",
+    menu: "Signal Menu"
   },
   bn: {
     home: "এক নজরে",
@@ -50,7 +53,10 @@ const translations = {
     support: "টেলিগ্রামের মাধ্যমে সহায়তা নিন",
     disconnect: "সিগন্যাল বিচ্ছিন্ন করুন",
     establishing: "সিগন্যাল লিঙ্ক স্থাপন করা হচ্ছে",
-    welcome: "স্বাগতম, নাগরিক"
+    welcome: "স্বাগতম, নাগরিক",
+    profile: "প্রোফাইল নোড",
+    logout: "লগআউট",
+    menu: "মেনু"
   }
 };
 
@@ -89,7 +95,7 @@ const TelegramSupportButton = () => (
     href={TELEGRAM_SUPPORT} 
     target="_blank" 
     rel="noreferrer"
-    className="fixed bottom-6 right-6 z-50 bg-[#229ED9] hover:bg-[#229ED9]/80 text-white p-4 rounded-full shadow-lg transition-all transform hover:scale-110 flex items-center justify-center border border-white/20"
+    className="fixed bottom-24 md:bottom-6 right-6 z-50 bg-[#229ED9] hover:bg-[#229ED9]/80 text-white p-4 rounded-full shadow-lg transition-all transform hover:scale-110 flex items-center justify-center border border-white/20"
     title="Telegram Support"
   >
     <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
@@ -97,6 +103,91 @@ const TelegramSupportButton = () => (
     </svg>
   </a>
 );
+
+const MobileDrawer: React.FC<{ 
+  isOpen: boolean; 
+  onClose: () => void; 
+  user: User | null; 
+  t: (k: any) => string;
+  isApproved: boolean;
+  isPremium: boolean;
+}> = ({ isOpen, onClose, user, t, isApproved, isPremium }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-[100] md:hidden">
+      {/* Backdrop */}
+      <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-md transition-opacity" onClick={onClose}></div>
+      
+      {/* Menu Content */}
+      <div className="absolute right-0 top-0 bottom-0 w-80 bg-slate-900 border-l border-white/10 shadow-2xl p-8 flex flex-col animate-slideIn">
+        <div className="flex items-center justify-between mb-12">
+          <SecureHLogo />
+          <button onClick={onClose} className="p-2 text-slate-500 hover:text-white transition-colors">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        {user ? (
+          <div className="flex-1 flex flex-col gap-6">
+            <Link to={`/profile/${user.uid}`} onClick={onClose} className="flex items-center gap-4 p-4 rounded-2xl bg-white/5 border border-white/5 hover:bg-rose-600/10 transition-all">
+              <img src={user.photoURL} className="w-12 h-12 rounded-xl object-cover ring-2 ring-rose-500/50" alt="p" />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-black text-white uppercase truncate">{user.displayName}</p>
+                <p className="text-[10px] text-rose-500 font-bold uppercase tracking-widest">{user.role}</p>
+              </div>
+            </Link>
+
+            <nav className="flex flex-col gap-2">
+              <Link to="/" onClick={onClose} className="p-4 text-[11px] font-black uppercase tracking-widest text-slate-300 hover:text-rose-500 flex items-center gap-4 transition-all">
+                <svg className="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
+                {t('home')}
+              </Link>
+              {isApproved && (
+                <>
+                  <Link to="/community" onClick={onClose} className="p-4 text-[11px] font-black uppercase tracking-widest text-slate-300 hover:text-rose-500 flex items-center gap-4 transition-all">
+                    <svg className="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>
+                    {t('community')}
+                  </Link>
+                  <Link to={isPremium ? "/chat" : "/pro"} onClick={onClose} className="p-4 text-[11px] font-black uppercase tracking-widest text-slate-300 hover:text-indigo-400 flex items-center gap-4 transition-all">
+                    <svg className="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
+                    {t('chat')}
+                  </Link>
+                </>
+              )}
+              <Link to="/pro" onClick={onClose} className="p-4 text-[11px] font-black uppercase tracking-widest text-slate-300 hover:text-amber-400 flex items-center gap-4 transition-all">
+                <svg className="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                {t('elite')}
+              </Link>
+              {user.role === 'admin' && (
+                 <Link to="/admin" onClick={onClose} className="p-4 text-[11px] font-black uppercase tracking-widest text-indigo-400 hover:text-indigo-300 flex items-center gap-4 transition-all">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" /></svg>
+                    {t('hq')}
+                 </Link>
+              )}
+            </nav>
+
+            <div className="mt-auto flex flex-col gap-4">
+              <button onClick={() => { signOut(auth); onClose(); }} className="w-full py-4 bg-slate-950 border border-red-500/30 text-red-500 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-3 active:scale-95 transition-all">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+                {t('logout')}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="flex-1 flex flex-col items-center justify-center text-center gap-6">
+            <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest leading-relaxed">Identity node not detected. Please link to established signal.</p>
+            <Link to="/auth" onClick={onClose} className="w-full py-4 bg-rose-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-rose-600/30">
+              {t('link')}
+            </Link>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
 
 const PendingApprovalView: React.FC<{ user: User }> = ({ user }) => {
   const { t } = useLang();
@@ -154,6 +245,7 @@ const App: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [maintenanceMode, setMaintenanceMode] = useState(false);
   const [lang, setLang] = useState<Language>('en');
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     const unsubscribeSettings = onSnapshot(doc(db, 'settings', 'site'), (snapshot) => {
@@ -233,26 +325,40 @@ const App: React.FC = () => {
             </div>
 
             <div className="flex items-center gap-4">
-              <div className="flex bg-slate-900 rounded-xl p-1 border border-white/5">
+              <div className="hidden sm:flex bg-slate-900 rounded-xl p-1 border border-white/5">
                 <button onClick={() => setLang('en')} className={`px-2 py-1 text-[8px] font-bold rounded-lg transition-all ${lang === 'en' ? 'bg-rose-600 text-white' : 'text-slate-500'}`}>EN</button>
                 <button onClick={() => setLang('bn')} className={`px-2 py-1 text-[8px] font-bold rounded-lg transition-all ${lang === 'bn' ? 'bg-rose-600 text-white' : 'text-slate-500'}`}>BN</button>
               </div>
 
               {currentUser ? (
                  <div className="flex items-center gap-3">
-                   {currentUser.role === 'admin' && <Link to="/admin" className="px-4 py-2 bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/20 rounded-xl text-[9px] font-black uppercase text-indigo-400 shadow-lg">{t('hq')}</Link>}
+                   {currentUser.role === 'admin' && <Link to="/admin" className="hidden lg:block px-4 py-2 bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/20 rounded-xl text-[9px] font-black uppercase text-indigo-400 shadow-lg">{t('hq')}</Link>}
                    <div className="hidden sm:block">
                      <Link to={`/profile/${currentUser.uid}`} className="flex items-center gap-2 group">
                        <img src={currentUser.photoURL} className="w-8 h-8 rounded-lg object-cover ring-2 ring-white/5 group-hover:ring-rose-500/50 transition-all" alt="p" />
                        <span className="text-[10px] font-black text-slate-200 uppercase truncate max-w-[80px]">{currentUser.displayName}</span>
                      </Link>
                    </div>
-                   <button onClick={() => signOut(auth)} className="p-2.5 bg-white/5 hover:bg-red-500/10 rounded-xl text-slate-500 hover:text-red-500 transition-all">
+                   <button onClick={() => signOut(auth)} className="hidden sm:block p-2.5 bg-white/5 hover:bg-red-500/10 rounded-xl text-slate-500 hover:text-red-500 transition-all">
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+                   </button>
+                   
+                   {/* Mobile Hamburger */}
+                   <button onClick={() => setIsMobileMenuOpen(true)} className="md:hidden p-3 bg-slate-900 border border-white/5 rounded-xl text-slate-400 hover:text-rose-500 transition-all shadow-lg active:scale-95">
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 6h16M4 12h16M4 18h16" />
+                      </svg>
                    </button>
                  </div>
               ) : (
-                <Link to="/auth" className="px-6 py-2.5 bg-rose-600 hover:bg-rose-500 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-rose-600/30 transition-all active:scale-95">{t('link')}</Link>
+                <div className="flex items-center gap-3">
+                  <Link to="/auth" className="px-6 py-2.5 bg-rose-600 hover:bg-rose-500 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-rose-600/30 transition-all active:scale-95">{t('link')}</Link>
+                  <button onClick={() => setIsMobileMenuOpen(true)} className="md:hidden p-3 bg-slate-900 border border-white/5 rounded-xl text-slate-400 hover:text-rose-500 transition-all shadow-lg active:scale-95">
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 6h16M4 12h16m-7 6h7" />
+                      </svg>
+                   </button>
+                </div>
               )}
             </div>
           </nav>
@@ -273,6 +379,15 @@ const App: React.FC = () => {
 
           <MobileBottomNav activeUser={currentUser} />
           <TelegramSupportButton />
+          
+          <MobileDrawer 
+            isOpen={isMobileMenuOpen} 
+            onClose={() => setIsMobileMenuOpen(false)} 
+            user={currentUser} 
+            t={t} 
+            isApproved={isApproved}
+            isPremium={isPremium}
+          />
         </div>
       </Router>
     </LangContext.Provider>

