@@ -17,7 +17,8 @@ import {
   increment,
   arrayUnion,
   arrayRemove,
-  addDoc
+  addDoc,
+  deleteDoc
 } from 'firebase/firestore';
 import { AdsterraAd } from '../components/AdsterraAd';
 import { UserBadge } from '../components/UserBadge';
@@ -188,6 +189,15 @@ const ProfileView: React.FC<{ activeUser: User }> = ({ activeUser }) => {
     });
   };
 
+  const handleDeletePost = async (postId: string) => {
+    if (!window.confirm("Delete this transmission forever?")) return;
+    try {
+      await deleteDoc(doc(db, 'posts', postId));
+    } catch (e) {
+      alert("Permission denied or link lost.");
+    }
+  };
+
   const handleStartDM = () => {
     const participants = [activeUser.uid, targetUid].sort();
     const chatId = `dm_${participants[0]}_${participants[1]}`;
@@ -224,11 +234,16 @@ const ProfileView: React.FC<{ activeUser: User }> = ({ activeUser }) => {
                 className={`relative w-32 h-32 md:w-56 md:h-56 rounded-3xl md:rounded-[2.5rem] object-cover ring-4 md:ring-8 ring-slate-950 shadow-2xl transition-all ${dpUploading ? 'opacity-50 blur-sm' : ''}`} 
                 alt="p" 
               />
+              {isOwnProfile && (
+                <div className="absolute bottom-2 right-2 md:bottom-4 md:right-4 bg-rose-600 text-white p-2 rounded-xl shadow-lg border-2 border-slate-950 pointer-events-none">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /></svg>
+                </div>
+              )}
             </div>
             {isOwnProfile && (
-              <label className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 rounded-3xl md:rounded-[2.5rem] cursor-pointer transition-all">
+              <label className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 rounded-3xl md:rounded-[2.5rem] cursor-pointer transition-all z-10">
                 <input type="file" className="hidden" accept="image/*" onChange={handleUpdateDP} />
-                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /></svg>
+                <span className="text-[10px] font-black text-white uppercase tracking-widest">Update Avatar</span>
               </label>
             )}
           </div>
@@ -255,6 +270,16 @@ const ProfileView: React.FC<{ activeUser: User }> = ({ activeUser }) => {
             <p className="text-slate-400 text-sm md:text-lg font-medium italic leading-relaxed max-w-2xl mx-auto md:mx-0 border-l-2 border-rose-500/30 pl-4 py-0.5">
                "{profileUser.bio || 'Signal pending initialization...'}"
             </p>
+
+            {profileUser.interests && (
+              <div className="flex flex-wrap gap-2 pt-1 justify-center md:justify-start">
+                {profileUser.interests.split(',').map((interest, i) => (
+                  <span key={i} className="px-2 py-0.5 bg-slate-900/60 border border-white/5 rounded-lg text-[8px] font-black uppercase text-slate-500 tracking-wider">
+                    #{interest.trim()}
+                  </span>
+                ))}
+              </div>
+            )}
             
             <div className="flex flex-wrap justify-center md:justify-start gap-4 md:gap-6 pt-1">
                {profileUser.socials?.telegram && (
@@ -370,6 +395,11 @@ const ProfileView: React.FC<{ activeUser: User }> = ({ activeUser }) => {
                       <span className="text-[7px] md:text-[8px] text-slate-600 uppercase tracking-widest font-black mt-0.5 block">{new Date(post.createdAt).toLocaleDateString()}</span>
                     </div>
                   </div>
+                  {(post.authorId === activeUser.uid || activeUser.role === 'admin') && (
+                    <button onClick={() => handleDeletePost(post.id)} className="p-2 text-slate-600 hover:text-red-500 transition-colors">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                    </button>
+                  )}
                 </div>
                 
                 {post.type === 'article' && post.title && <h3 className="text-lg md:text-2xl font-black text-white tracking-tighter mb-3 leading-tight uppercase">{post.title}</h3>}

@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, createContext, useContext } from 'react';
 import * as ReactRouterDOM from 'react-router-dom';
-const { HashRouter: Router, Routes, Route, Link, useNavigate, useLocation, Navigate } = ReactRouterDOM as any;
+const { BrowserRouter: Router, Routes, Route, Link, useNavigate, useLocation, Navigate } = ReactRouterDOM as any;
 
 import { User, Language } from './types';
 import { SocialBarAd } from './components/SocialBarAd';
@@ -13,6 +13,7 @@ import AuthView from './views/AuthView';
 import AdminView from './views/AdminView';
 import OverviewView from './views/OverviewView';
 import MaintenanceView from './views/MaintenanceView';
+import VideoView from './views/VideoView';
 import { auth, db } from './services/firebase';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { doc, updateDoc, onSnapshot } from 'firebase/firestore';
@@ -25,6 +26,7 @@ const translations = {
   en: {
     home: "Overview",
     community: "Community",
+    streams: "Streams",
     chat: "Transmit",
     elite: "Elite",
     hq: "HQ Terminal",
@@ -63,6 +65,7 @@ const translations = {
   bn: {
     home: "এক নজরে",
     community: "কমিউনিটি",
+    streams: "ভিডিও",
     chat: "বার্তা প্রেরণ",
     elite: "এলিট",
     hq: "হেডকোয়ার্টার",
@@ -88,7 +91,7 @@ const translations = {
     statSignals: "সিগন্যাল ইতিহাস",
     statStreams: "ভিজ্যুয়াল স্ট্রিমস",
     aboutTitle: "সিকিউরএইচ প্রোটোকল সম্পর্কে",
-    aboutText: "সিকিউরএইচ একটি বিকেন্দ্রীভূত কমিউনিটি অবকাঠামো যা সম্পূর্ণ গোপনীয়তার জন্য ডিজাইন করা হয়েছে। আমরা আপনার সিগন্যালের অখণ্ডতাকে সবকিছুর উপরে গুরুত্ব দেই।",
+    aboutText: "সিকিউরএইচ একটি বিকেন্দ্রেভূত কমিউনিটি অবকাঠামো যা সম্পূর্ণ গোপনীয়তার জন্য ডিজাইন করা হয়েছে। আমরা আপনার সিগন্যালের অখণ্ডতাকে সবকিছুর উপরে গুরুত্ব দেই।",
     aboutFeature1: "কোন ভিপিএন প্রয়োজন নেই: বাইপাস টুল ছাড়াই বিশ্বব্যাপী সংযোগ করুন।",
     aboutFeature2: "এন্ড-টু-এন্ড এনক্রিপশন: সম্পূর্ণ সিগন্যাল সুরক্ষা।",
     aboutFeature3: "অ্যাডমিন অ্যাক্সেস নেই: এমনকি হাই কমান্ডও ব্যক্তিগত ডেটা দেখতে পারে না।",
@@ -189,6 +192,10 @@ const MobileDrawer: React.FC<{
                     <svg className="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>
                     {t('community')}
                   </Link>
+                  <Link to="/video" onClick={onClose} className="p-4 text-[11px] font-black uppercase tracking-widest text-slate-300 hover:text-rose-500 flex items-center gap-4 transition-all">
+                    <svg className="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                    {t('streams')}
+                  </Link>
                   <Link to={isPremium ? "/chat" : "/pro"} onClick={onClose} className="p-4 text-[11px] font-black uppercase tracking-widest text-slate-300 hover:text-indigo-400 flex items-center gap-4 transition-all">
                     <svg className="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
                     {t('chat')}
@@ -267,6 +274,9 @@ const MobileBottomNav: React.FC<{ activeUser: User | null }> = ({ activeUser }) 
       </Link>
       <Link to="/community" className={`p-3 rounded-2xl transition-all ${isActive('/community') ? 'bg-rose-500/20 text-rose-400' : 'text-slate-500'}`}>
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 6h16M4 12h16M4 18h16" /></svg>
+      </Link>
+      <Link to="/video" className={`p-3 rounded-2xl transition-all ${isActive('/video') ? 'bg-rose-500/20 text-rose-400' : 'text-slate-500'}`}>
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
       </Link>
       <Link to="/chat" className={`p-3 rounded-2xl transition-all ${isActive('/chat') ? 'bg-indigo-500/20 text-indigo-400' : 'text-slate-500'}`}>
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
@@ -354,6 +364,7 @@ const App: React.FC = () => {
                 {isApproved && (
                   <>
                     <Link to="/community" className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-rose-500 transition-colors">{t('community')}</Link>
+                    <Link to="/video" className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-rose-500 transition-colors">{t('streams')}</Link>
                     <Link to={isPremium ? "/chat" : "/pro"} className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-indigo-400 transition-colors flex items-center gap-2">
                       {t('chat')}
                       {!isPremium && <span className="bg-amber-500 w-1 h-1 rounded-full shadow-[0_0_8px_rgba(245,158,11,0.5)]"></span>}
@@ -404,6 +415,7 @@ const App: React.FC = () => {
               <Routes>
                 <Route path="/" element={<OverviewView activeUser={currentUser} />} />
                 <Route path="/community" element={currentUser ? (isApproved ? <FeedView user={currentUser} /> : <PendingApprovalView user={currentUser} />) : <Navigate to="/auth" />} />
+                <Route path="/video" element={currentUser ? (isApproved ? <VideoView user={currentUser} /> : <PendingApprovalView user={currentUser} />) : <Navigate to="/auth" />} />
                 <Route path="/auth" element={!currentUser ? <AuthView /> : <Navigate to="/" />} />
                 <Route path="/profile/:uid" element={currentUser ? (isApproved ? <ProfileView activeUser={currentUser} /> : <PendingApprovalView user={currentUser} />) : <Navigate to="/auth" />} />
                 <Route path="/chat" element={currentUser ? (isApproved ? (isPremium ? <ChatView activeUser={currentUser} /> : <Navigate to="/pro" />) : <PendingApprovalView user={currentUser} />) : <Navigate to="/auth" />} />

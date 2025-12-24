@@ -6,11 +6,14 @@ import { collection, addDoc, query, where, onSnapshot } from 'firebase/firestore
 import { uploadToImgBB } from '../services/imgbb';
 import { useLang } from '../App';
 import { AdsterraAd } from '../components/AdsterraAd';
+import * as ReactRouterDOM from 'react-router-dom';
+const { useNavigate } = ReactRouterDOM as any;
 
 const TELEGRAM_SUPPORT = 'https://t.me/securehx';
 
 const UpgradeView: React.FC<{ activeUser: User }> = ({ activeUser }) => {
   const { lang } = useLang();
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [txId, setTxId] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -87,7 +90,7 @@ const UpgradeView: React.FC<{ activeUser: User }> = ({ activeUser }) => {
         </div>
         <h2 className="text-3xl font-black text-white tracking-tight uppercase">CITIZEN ELITE</h2>
         <p className="text-slate-400 font-medium">{t_upgrade.already}</p>
-        <button onClick={() => window.location.hash = '/'} className="bg-slate-800 hover:bg-slate-700 text-white px-8 py-3 rounded-2xl font-black uppercase tracking-widest text-[10px] transition-all">{lang === 'bn' ? 'ফিরে যান' : 'Return'}</button>
+        <button onClick={() => navigate('/')} className="bg-slate-800 hover:bg-slate-700 text-white px-8 py-3 rounded-2xl font-black uppercase tracking-widest text-[10px] transition-all">{lang === 'bn' ? 'ফিরে যান' : 'Return'}</button>
       </div>
     );
   }

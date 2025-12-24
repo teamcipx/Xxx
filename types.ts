@@ -3,7 +3,7 @@ export type UserRole = 'user' | 'premium' | 'pro' | 'admin';
 export type Gender = 'Male' | 'Female' | 'Other' | 'Prefer not to say';
 export type VerificationStatus = 'none' | 'pending' | 'verified' | 'rejected';
 export type AccountStatus = 'pending' | 'active' | 'banned';
-export type PostType = 'standard' | 'article';
+export type PostType = 'standard' | 'article' | 'video';
 export type Language = 'en' | 'bn';
 
 export interface User {
@@ -54,6 +54,7 @@ export interface Post {
   title?: string;
   content: string;
   imageUrl?: string;
+  videoUrl?: string;
   likes: string[];
   dislikes: string[];
   commentsCount: number;
