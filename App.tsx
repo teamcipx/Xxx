@@ -38,7 +38,27 @@ const translations = {
     welcome: "Welcome, Citizen",
     profile: "Profile Node",
     logout: "Exit Grid",
-    menu: "Signal Menu"
+    menu: "Signal Menu",
+    protocolActive: "Protocol 3.0 Active",
+    heroTitle: "The Global SecureH Web",
+    heroSub: "High-performance networking with Zero VPN dependency. Military-grade encryption for the 42 synchronized nations.",
+    accessGrid: "Access Community Grid",
+    initNode: "Initialize My Node",
+    dossier: "Security Dossier",
+    statNations: "Nations Online",
+    statCitizens: "Active Citizens",
+    statSignals: "Signal History",
+    statStreams: "Visual Streams",
+    aboutTitle: "About the SecureH Protocol",
+    aboutText: "SecureH is a decentralized community infrastructure designed for absolute privacy. We prioritize your signal's integrity over everything else.",
+    aboutFeature1: "No VPN Required: Connect globally without bypass tools.",
+    aboutFeature2: "End-to-End Encryption: Complete signal protection.",
+    aboutFeature3: "No Admin Access: Even High Command cannot view private data.",
+    aboutFeature4: "42 Nations Synchronized: A truly borderless web.",
+    aboutFeature5: "Three Security Protocols: Triple-layered transmission safety.",
+    immutablePrivacy: "Immutable Privacy",
+    noBackdoors: "No backdoors. No admin intrusion. Pure encryption.",
+    copyright: "SecureH Network Infrastructure | 42 Nodes Active"
   },
   bn: {
     home: "এক নজরে",
@@ -56,7 +76,27 @@ const translations = {
     welcome: "স্বাগতম, নাগরিক",
     profile: "প্রোফাইল নোড",
     logout: "লগআউট",
-    menu: "মেনু"
+    menu: "মেনু",
+    protocolActive: "প্রোটোকল ৩.০ সক্রিয়",
+    heroTitle: "গ্লোবাল সিকিউরএইচ ওয়েব",
+    heroSub: "জিরো ভিপিএন নির্ভরতা সহ উচ্চ-ক্ষমতাসম্পন্ন নেটওয়ার্কিং। ৪২টি সিঙ্ক্রোনাইজড জাতির জন্য মিলিটারী-গ্রেড এনক্রিপশন।",
+    accessGrid: "কমিউনিটি গ্রিডে প্রবেশ করুন",
+    initNode: "আমার নোড শুরু করুন",
+    dossier: "সিকিউরিটি ডসিয়ার",
+    statNations: "অনলাইন দেশসমূহ",
+    statCitizens: "সক্রিয় নাগরিক",
+    statSignals: "সিগন্যাল ইতিহাস",
+    statStreams: "ভিজ্যুয়াল স্ট্রিমস",
+    aboutTitle: "সিকিউরএইচ প্রোটোকল সম্পর্কে",
+    aboutText: "সিকিউরএইচ একটি বিকেন্দ্রীভূত কমিউনিটি অবকাঠামো যা সম্পূর্ণ গোপনীয়তার জন্য ডিজাইন করা হয়েছে। আমরা আপনার সিগন্যালের অখণ্ডতাকে সবকিছুর উপরে গুরুত্ব দেই।",
+    aboutFeature1: "কোন ভিপিএন প্রয়োজন নেই: বাইপাস টুল ছাড়াই বিশ্বব্যাপী সংযোগ করুন।",
+    aboutFeature2: "এন্ড-টু-এন্ড এনক্রিপশন: সম্পূর্ণ সিগন্যাল সুরক্ষা।",
+    aboutFeature3: "অ্যাডমিন অ্যাক্সেস নেই: এমনকি হাই কমান্ডও ব্যক্তিগত ডেটা দেখতে পারে না।",
+    aboutFeature4: "৪২টি জাতি সিঙ্ক্রোনাইজড: একটি সত্যিকারের সীমানাহীন ওয়েব।",
+    aboutFeature5: "তিনটি নিরাপত্তা প্রোটোকল: ট্রিপল-লেয়ার ট্রান্সমিশন নিরাপত্তা।",
+    immutablePrivacy: "অপরিবর্তনীয় গোপনীয়তা",
+    noBackdoors: "কোন ব্যাকডোর নেই। কোন অ্যাডমিন অনুপ্রবেশ নেই। খাঁটি এনক্রিপশন।",
+    copyright: "সিকিউরএইচ নেটওয়ার্ক অবকাঠামো | ৪২টি নোড সক্রিয়"
   }
 };
 
@@ -116,10 +156,7 @@ const MobileDrawer: React.FC<{
 
   return (
     <div className="fixed inset-0 z-[100] md:hidden">
-      {/* Backdrop */}
       <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-md transition-opacity" onClick={onClose}></div>
-      
-      {/* Menu Content */}
       <div className="absolute right-0 top-0 bottom-0 w-80 bg-slate-900 border-l border-white/10 shadow-2xl p-8 flex flex-col animate-slideIn">
         <div className="flex items-center justify-between mb-12">
           <SecureHLogo />
@@ -342,8 +379,6 @@ const App: React.FC = () => {
                    <button onClick={() => signOut(auth)} className="hidden sm:block p-2.5 bg-white/5 hover:bg-red-500/10 rounded-xl text-slate-500 hover:text-red-500 transition-all">
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
                    </button>
-                   
-                   {/* Mobile Hamburger */}
                    <button onClick={() => setIsMobileMenuOpen(true)} className="md:hidden p-3 bg-slate-900 border border-white/5 rounded-xl text-slate-400 hover:text-rose-500 transition-all shadow-lg active:scale-95">
                       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 6h16M4 12h16M4 18h16" />

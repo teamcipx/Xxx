@@ -18,7 +18,7 @@ export const AdsterraAd: React.FC<AdsterraAdProps> = ({ id, format = 'banner', c
         const scriptConfig = document.createElement('script');
         scriptConfig.type = 'text/javascript';
         
-        // 300x160 Banner
+        // 300x160 Banner Config
         const atOptions = {
           'key': '11d4ee8945e099177502bfb8765f669a',
           'format': 'iframe',
@@ -36,22 +36,16 @@ export const AdsterraAd: React.FC<AdsterraAdProps> = ({ id, format = 'banner', c
         container.appendChild(scriptConfig);
         container.appendChild(scriptInvoke);
       } else {
-        // Native Container Ad
-        const uniqueContainerId = `container-${id}-${Math.random().toString(36).substr(2, 9)}`;
-        const adContainer = document.createElement('div');
-        adContainer.id = uniqueContainerId;
-        container.appendChild(adContainer);
-
+        // Native Ads
         const scriptNative = document.createElement('script');
         scriptNative.async = true;
         scriptNative.dataset.cfasync = "false";
         scriptNative.src = 'https://pl28318900.effectivegatecpm.com/15c7aafe095e6e54735bf87f23f68ef9/invoke.js';
         
-        // Ensure the ID matches what the script expects or just use the global one if it's fixed
-        // Adsterra native scripts often target a specific fixed ID provided in their dashboard.
-        const fixedContainerId = 'container-15c7aafe095e6e54735bf87f23f68ef9';
-        adContainer.id = fixedContainerId;
-
+        const adContainer = document.createElement('div');
+        adContainer.id = 'container-15c7aafe095e6e54735bf87f23f68ef9';
+        
+        container.appendChild(adContainer);
         container.appendChild(scriptNative);
       }
     }

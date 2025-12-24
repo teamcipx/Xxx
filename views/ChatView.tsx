@@ -153,8 +153,8 @@ const ChatView: React.FC<{ activeUser: User }> = ({ activeUser }) => {
               const isMe = m.senderId === activeUser.uid;
               return (
                 <React.Fragment key={m.id}>
-                  {/* Inline Chat Banner (requested: Message a baner dekhau) */}
-                  {i > 0 && i % 8 === 0 && <AdsterraAd id={`chat-msg-ad-${i}`} format="banner" className="scale-90 my-6" />}
+                  {/* Inline Chat Banner - Every 5 messages as requested */}
+                  {i > 0 && i % 5 === 0 && <AdsterraAd id={`chat-msg-ad-${i}`} format="banner" className="scale-90 my-6" />}
                   
                   <div className={`flex ${isMe ? 'justify-end' : 'justify-start'} animate-slideIn`}>
                     <div className={`max-w-[90%] md:max-w-[70%] flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
