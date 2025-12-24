@@ -45,10 +45,13 @@ const ChatView: React.FC<{ activeUser: User }> = ({ activeUser }) => {
 
   // Enhanced Inbox logic to fetch all DMs and summarize them like Messenger
   useEffect(() => {
+    // Listen for all messages where the user is a participant
+    // Since we don't have a direct 'participants' array on message docs, 
+    // we fetch recent messages and filter client-side or use a composite index strategy.
     const qRecent = query(
       collection(db, 'messages'),
       orderBy('createdAt', 'desc'),
-      limit(500)
+      limit(1000)
     );
 
     const unsubscribe = onSnapshot(qRecent, (snapshot) => {
@@ -58,7 +61,7 @@ const ChatView: React.FC<{ activeUser: User }> = ({ activeUser }) => {
       
       allMsgs.forEach(m => {
         if (!m.chatId) return; // Skip global chat
-        if (!m.chatId.includes(activeUser.uid)) return; // Skip DMs not involving me
+        if (!m.chatId.includes(activeUser.uid)) return; // Only process DMs I'm part of
 
         if (!summaries[m.chatId] || m.createdAt > summaries[m.chatId].lastTimestamp) {
           const parts = m.chatId.split('_');
@@ -67,15 +70,26 @@ const ChatView: React.FC<{ activeUser: User }> = ({ activeUser }) => {
           summaries[m.chatId] = {
             chatId: m.chatId,
             lastMessage: m.text,
-            lastSenderName: m.senderName || 'Signal',
+            lastSenderName: m.senderId === activeUser.uid ? 'You' : (m.senderName || 'Citizen'),
             lastTimestamp: m.createdAt,
             partnerId: partnerId,
-            partnerName: m.senderId === activeUser.uid ? 'Receiver Node' : (m.senderName || 'Anonymous Citizen'),
-            partnerPhoto: m.senderId === activeUser.uid ? `https://ui-avatars.com/api/?name=${partnerId}&background=random` : (m.senderPhoto || '')
+            partnerName: m.senderId === activeUser.uid ? 'Loading...' : (m.senderName || 'Anonymous Citizen'),
+            partnerPhoto: m.senderId === activeUser.uid ? '' : (m.senderPhoto || '')
           };
         }
       });
-      setRecentChats(Object.values(summaries).sort((a, b) => b.lastTimestamp - a.lastTimestamp));
+
+      // Attempt to resolve partner names for 'You' entries if we only have the sender's side
+      // In a real app, you'd fetch user profiles for partnerId.
+      const list = Object.values(summaries).map(s => {
+        if (s.partnerName === 'Loading...') {
+            s.partnerName = `Node: ${s.partnerId.substring(0,6)}`;
+            s.partnerPhoto = `https://ui-avatars.com/api/?name=${s.partnerId}&background=random`;
+        }
+        return s;
+      });
+
+      setRecentChats(list.sort((a, b) => b.lastTimestamp - a.lastTimestamp));
     });
 
     return unsubscribe;
@@ -110,6 +124,7 @@ const ChatView: React.FC<{ activeUser: User }> = ({ activeUser }) => {
       senderName: activeUser.displayName,
       senderPhoto: activeUser.photoURL,
       senderRole: activeUser.role,
+      senderVerified: activeUser.isVerified,
       text: text,
       chatId: chatId || null,
       createdAt: Date.now()
@@ -125,8 +140,8 @@ const ChatView: React.FC<{ activeUser: User }> = ({ activeUser }) => {
              <h2 className="text-sm font-black text-white uppercase tracking-[0.2em]">Signal Inbox</h2>
              <div className="w-2 h-2 bg-green-500 rounded-full animate-ping"></div>
            </div>
-           <AdsterraAd id="chat-sidebar-top-1" format="banner" className="scale-75 -my-4" />
-           <AdsterraAd id="chat-sidebar-top-2" format="banner" className="scale-75 -my-4" />
+           <AdsterraAd id="chat-sidebar-top-banner" format="banner" className="scale-75 -my-4" />
+           <AdsterraAd id="chat-sidebar-top-banner-2" format="banner" className="scale-75 -my-4" />
         </div>
         
         <div className="flex-1 overflow-y-auto custom-scrollbar">
@@ -143,8 +158,7 @@ const ChatView: React.FC<{ activeUser: User }> = ({ activeUser }) => {
            </button>
            
            <div className="p-4 bg-slate-900/20">
-             <AdsterraAd id="chat-sidebar-mid-native" format="native" className="scale-90" />
-             <AdsterraAd id="chat-sidebar-mid-banner" format="banner" className="mt-2 scale-90" />
+             <AdsterraAd id="chat-sidebar-native" format="native" className="scale-90" />
            </div>
 
            {recentChats.length === 0 ? (
@@ -172,8 +186,8 @@ const ChatView: React.FC<{ activeUser: User }> = ({ activeUser }) => {
            ))}
         </div>
         <div className="p-4 bg-slate-900/40 border-t border-white/5 space-y-2">
-           <AdsterraAd id="chat-sidebar-bottom-1" format="banner" className="scale-90" />
-           <AdsterraAd id="chat-sidebar-bottom-2" format="banner" className="scale-90" />
+           <AdsterraAd id="chat-sidebar-bottom-banner" format="banner" className="scale-90" />
+           <AdsterraAd id="chat-sidebar-bottom-banner-2" format="banner" className="scale-90" />
         </div>
       </div>
 
@@ -192,14 +206,14 @@ const ChatView: React.FC<{ activeUser: User }> = ({ activeUser }) => {
              </div>
           </div>
           <div className="hidden md:flex flex-col gap-1">
-             <AdsterraAd id="chat-header-banner-1" format="banner" className="scale-50 -my-8" />
+             <AdsterraAd id="chat-header-banner" format="banner" className="scale-50 -my-8" />
              <AdsterraAd id="chat-header-banner-2" format="banner" className="scale-50 -my-8" />
           </div>
         </div>
 
         <div className="flex-1 overflow-y-auto p-6 md:p-10 space-y-6 md:space-y-8 custom-scrollbar bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-slate-900/20 via-transparent to-transparent" ref={scrollRef}>
-          <AdsterraAd id="chat-window-top-1" format="banner" />
-          <AdsterraAd id="chat-window-top-2" format="banner" />
+          <AdsterraAd id="chat-window-top-banner" format="banner" />
+          <AdsterraAd id="chat-window-top-banner-2" format="banner" />
           
           {loading ? (
             <div className="h-full flex flex-col items-center justify-center gap-4 opacity-40">
@@ -216,7 +230,7 @@ const ChatView: React.FC<{ activeUser: User }> = ({ activeUser }) => {
               const isMe = m.senderId === activeUser.uid;
               return (
                 <React.Fragment key={m.id}>
-                  {/* Inline Message Ads - More frequent - every 3 messages */}
+                  {/* High frequency inline ads - every 3 messages */}
                   {i > 0 && i % 3 === 0 && (
                     <div className="flex flex-col items-center gap-2 my-8 animate-fadeIn">
                        <AdsterraAd id={`chat-inline-banner-${i}`} format="banner" className="scale-90" />
@@ -253,12 +267,12 @@ const ChatView: React.FC<{ activeUser: User }> = ({ activeUser }) => {
             })
           )}
           
-          <AdsterraAd id="chat-window-bottom-1" format="banner" className="mt-10" />
-          <AdsterraAd id="chat-window-bottom-2" format="banner" className="mt-4" />
+          <AdsterraAd id="chat-window-bottom-banner" format="banner" className="mt-10" />
+          <AdsterraAd id="chat-window-bottom-banner-2" format="banner" className="mt-4" />
         </div>
 
         <div className="p-5 md:p-8 bg-slate-900/60 border-t border-white/5 flex flex-col gap-4 backdrop-blur-3xl z-20">
-           <AdsterraAd id="chat-input-top-banner" format="banner" className="scale-75 -my-4" />
+           <AdsterraAd id="chat-input-area-banner" format="banner" className="scale-75 -my-4" />
            <div className="flex gap-4">
              <input 
                type="text" 

