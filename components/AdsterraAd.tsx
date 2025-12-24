@@ -1,5 +1,6 @@
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useContext } from 'react';
+import { UserContext } from '../App';
 
 interface AdsterraAdProps {
   id: string;
@@ -9,8 +10,13 @@ interface AdsterraAdProps {
 
 export const AdsterraAd: React.FC<AdsterraAdProps> = ({ id, format = 'banner', className = "" }) => {
   const adRef = useRef<HTMLDivElement>(null);
+  const { user } = useContext(UserContext);
+
+  // No ads for non-basic users (Premium, Pro, Admin)
+  const isPremium = user && user.role !== 'user';
 
   useEffect(() => {
+    if (isPremium) return;
     if (adRef.current && !adRef.current.innerHTML.trim()) {
       const container = adRef.current;
       
@@ -18,7 +24,6 @@ export const AdsterraAd: React.FC<AdsterraAdProps> = ({ id, format = 'banner', c
         const scriptConfig = document.createElement('script');
         scriptConfig.type = 'text/javascript';
         
-        // 300x160 Banner Config
         const atOptions = {
           'key': '11d4ee8945e099177502bfb8765f669a',
           'format': 'iframe',
@@ -36,7 +41,6 @@ export const AdsterraAd: React.FC<AdsterraAdProps> = ({ id, format = 'banner', c
         container.appendChild(scriptConfig);
         container.appendChild(scriptInvoke);
       } else {
-        // Native Ads
         const scriptNative = document.createElement('script');
         scriptNative.async = true;
         scriptNative.dataset.cfasync = "false";
@@ -49,7 +53,9 @@ export const AdsterraAd: React.FC<AdsterraAdProps> = ({ id, format = 'banner', c
         container.appendChild(scriptNative);
       }
     }
-  }, [format, id]);
+  }, [format, id, isPremium]);
+
+  if (isPremium) return null;
 
   return (
     <div 

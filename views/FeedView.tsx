@@ -19,7 +19,8 @@ import {
   updateDoc, 
   increment,
   arrayUnion, 
-  arrayRemove 
+  arrayRemove,
+  deleteDoc 
 } from 'firebase/firestore';
 
 const TruncatedText: React.FC<{ text: string; limit: number }> = ({ text, limit }) => {
@@ -134,12 +135,13 @@ const FeedView: React.FC<{ user: User }> = ({ user }) => {
     });
   };
 
-  const handleDislike = async (post: Post) => {
-    const isDisliked = post.dislikes.includes(user.uid);
-    await updateDoc(doc(db, 'posts', post.id), {
-      dislikes: isDisliked ? arrayRemove(user.uid) : arrayUnion(user.uid),
-      likes: arrayRemove(user.uid)
-    });
+  const handleDeletePost = async (postId: string) => {
+    if (!window.confirm("Delete this transmission forever?")) return;
+    try {
+      await deleteDoc(doc(db, 'posts', postId));
+    } catch (e) {
+      alert("Permission denied or link lost.");
+    }
   };
 
   return (
@@ -168,7 +170,23 @@ const FeedView: React.FC<{ user: User }> = ({ user }) => {
             {idx > 0 && idx % 4 === 0 && <AdsterraAd id={`feed-node-${idx}`} format="native" />}
             <div className="glass-effect rounded-3xl md:rounded-[2.8rem] overflow-hidden border border-white/5 shadow-xl transition-all duration-300 hover:scale-[1.01] hover:shadow-rose-600/5 group/post">
               <div className="p-5 md:p-10">
-                <div className="flex items-center justify-between mb-5 md:mb-8"><Link to={`/profile/${post.authorId}`} className="flex items-center gap-3 md:gap-4"><img src={post.authorPhoto} className="w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl object-cover ring-2 md:ring-4 ring-slate-950 transition-transform group-hover/post:scale-110" alt="a" /><div><div className="flex items-center gap-2"><span className="text-[11px] md:text-sm font-black text-slate-100 uppercase tracking-tight">{post.authorName}</span><UserBadge role={post.authorRole} /></div><span className="text-[7px] md:text-[8px] text-slate-600 uppercase tracking-widest font-black mt-0.5 block">{new Date(post.createdAt).toLocaleDateString()}</span></div></Link></div>
+                <div className="flex items-center justify-between mb-5 md:mb-8">
+                  <Link to={`/profile/${post.authorId}`} className="flex items-center gap-3 md:gap-4">
+                    <img src={post.authorPhoto} className="w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl object-cover ring-2 md:ring-4 ring-slate-950 transition-transform group-hover/post:scale-110" alt="a" />
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[11px] md:text-sm font-black text-slate-100 uppercase tracking-tight">{post.authorName}</span>
+                        <UserBadge role={post.authorRole} />
+                      </div>
+                      <span className="text-[7px] md:text-[8px] text-slate-600 uppercase tracking-widest font-black mt-0.5 block">{new Date(post.createdAt).toLocaleDateString()}</span>
+                    </div>
+                  </Link>
+                  {(post.authorId === user.uid || user.role === 'admin') && (
+                    <button onClick={() => handleDeletePost(post.id)} className="p-2 text-slate-600 hover:text-red-500 transition-colors">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                    </button>
+                  )}
+                </div>
                 
                 {post.type === 'article' && <AdsterraAd id={`article-ad-${post.id}`} format="banner" className="mb-6" />}
                 

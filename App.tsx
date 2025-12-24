@@ -107,6 +107,7 @@ type LangContextType = {
 };
 
 const LangContext = createContext<LangContextType | undefined>(undefined);
+export const UserContext = createContext<{ user: User | null }>({ user: null });
 
 export const useLang = () => {
   const context = useContext(LangContext);
@@ -234,7 +235,7 @@ const PendingApprovalView: React.FC<{ user: User }> = ({ user }) => {
         <div className="absolute inset-0 bg-rose-600/20 blur-[100px] rounded-full animate-pulse"></div>
         <div className="relative bg-slate-900 border-4 border-rose-500/50 w-32 h-32 md:w-40 md:h-40 rounded-full flex items-center justify-center shadow-2xl">
           <svg className="w-16 h-16 md:w-20 md:h-20 text-rose-500 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A10.003 10.003 0 0112 3c1.72 0 3.347.433 4.775 1.2a10 10 0 014.472 8.528c0 2.304-.775 4.428-2.083 6.13M12 11c0-3.314 2.686-6 6-6s6 2.686 6 6-2.686 6-6 6-6-2.686-6-6zm-6 2c0 1.657-1.343 3-3 3s-3-1.343-3-3 1.343-3 3-3 3 1.343 3 3z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A10.003 10.003 0 0112 3c1.72 0 3.347.433 4.775 1.2a10 10 0 014.472 8.528c0 2.304-.775 4.428-2.083 6.13M12 11c0-3.314 2.686-6 6-6s6 2.686 6 6-2.686 6-6 6-6-2.686-6-6zm-6 2c0 1.657-1.343 3-3 3s-3-1.343-3-3 1.343-3-3-3 3 1.343 3 3z" />
           </svg>
         </div>
       </div>
@@ -340,92 +341,94 @@ const App: React.FC = () => {
   const isPremium = currentUser?.role !== 'user';
 
   return (
-    <LangContext.Provider value={{ lang, setLang, t }}>
-      <Router>
-        <SocialBarAd />
-        <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
-          <nav className="sticky top-0 z-40 glass-effect border-b border-white/5 px-6 py-4 flex items-center justify-between shadow-xl">
-            <Link to="/"><SecureHLogo /></Link>
-            
-            <div className="hidden md:flex items-center gap-8">
-              <Link to="/" className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-rose-500 transition-colors">{t('home')}</Link>
-              {isApproved && (
-                <>
-                  <Link to="/community" className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-rose-500 transition-colors">{t('community')}</Link>
-                  <Link to={isPremium ? "/chat" : "/pro"} className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-indigo-400 transition-colors flex items-center gap-2">
-                    {t('chat')}
-                    {!isPremium && <span className="bg-amber-500 w-1 h-1 rounded-full shadow-[0_0_8px_rgba(245,158,11,0.5)]"></span>}
-                  </Link>
-                </>
-              )}
-              <Link to="/pro" className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-amber-400 transition-colors">{t('elite')}</Link>
-            </div>
-
-            <div className="flex items-center gap-4">
-              <div className="hidden sm:flex bg-slate-900 rounded-xl p-1 border border-white/5">
-                <button onClick={() => setLang('en')} className={`px-2 py-1 text-[8px] font-bold rounded-lg transition-all ${lang === 'en' ? 'bg-rose-600 text-white' : 'text-slate-500'}`}>EN</button>
-                <button onClick={() => setLang('bn')} className={`px-2 py-1 text-[8px] font-bold rounded-lg transition-all ${lang === 'bn' ? 'bg-rose-600 text-white' : 'text-slate-500'}`}>BN</button>
+    <UserContext.Provider value={{ user: currentUser }}>
+      <LangContext.Provider value={{ lang, setLang, t }}>
+        <Router>
+          <SocialBarAd />
+          <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
+            <nav className="sticky top-0 z-40 glass-effect border-b border-white/5 px-6 py-4 flex items-center justify-between shadow-xl">
+              <Link to="/"><SecureHLogo /></Link>
+              
+              <div className="hidden md:flex items-center gap-8">
+                <Link to="/" className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-rose-500 transition-colors">{t('home')}</Link>
+                {isApproved && (
+                  <>
+                    <Link to="/community" className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-rose-500 transition-colors">{t('community')}</Link>
+                    <Link to={isPremium ? "/chat" : "/pro"} className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-indigo-400 transition-colors flex items-center gap-2">
+                      {t('chat')}
+                      {!isPremium && <span className="bg-amber-500 w-1 h-1 rounded-full shadow-[0_0_8px_rgba(245,158,11,0.5)]"></span>}
+                    </Link>
+                  </>
+                )}
+                <Link to="/pro" className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-amber-400 transition-colors">{t('elite')}</Link>
               </div>
 
-              {currentUser ? (
-                 <div className="flex items-center gap-3">
-                   {currentUser.role === 'admin' && <Link to="/admin" className="hidden lg:block px-4 py-2 bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/20 rounded-xl text-[9px] font-black uppercase text-indigo-400 shadow-lg">{t('hq')}</Link>}
-                   <div className="hidden sm:block">
-                     <Link to={`/profile/${currentUser.uid}`} className="flex items-center gap-2 group">
-                       <img src={currentUser.photoURL} className="w-8 h-8 rounded-lg object-cover ring-2 ring-white/5 group-hover:ring-rose-500/50 transition-all" alt="p" />
-                       <span className="text-[10px] font-black text-slate-200 uppercase truncate max-w-[80px]">{currentUser.displayName}</span>
-                     </Link>
-                   </div>
-                   <button onClick={() => signOut(auth)} className="hidden sm:block p-2.5 bg-white/5 hover:bg-red-500/10 rounded-xl text-slate-500 hover:text-red-500 transition-all">
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
-                   </button>
-                   <button onClick={() => setIsMobileMenuOpen(true)} className="md:hidden p-3 bg-slate-900 border border-white/5 rounded-xl text-slate-400 hover:text-rose-500 transition-all shadow-lg active:scale-95">
-                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 6h16M4 12h16M4 18h16" />
-                      </svg>
-                   </button>
-                 </div>
-              ) : (
-                <div className="flex items-center gap-3">
-                  <Link to="/auth" className="px-6 py-2.5 bg-rose-600 hover:bg-rose-500 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-rose-600/30 transition-all active:scale-95">{t('link')}</Link>
-                  <button onClick={() => setIsMobileMenuOpen(true)} className="md:hidden p-3 bg-slate-900 border border-white/5 rounded-xl text-slate-400 hover:text-rose-500 transition-all shadow-lg active:scale-95">
-                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 6h16M4 12h16m-7 6h7" />
-                      </svg>
-                   </button>
+              <div className="flex items-center gap-4">
+                <div className="hidden sm:flex bg-slate-900 rounded-xl p-1 border border-white/5">
+                  <button onClick={() => setLang('en')} className={`px-2 py-1 text-[8px] font-bold rounded-lg transition-all ${lang === 'en' ? 'bg-rose-600 text-white' : 'text-slate-500'}`}>EN</button>
+                  <button onClick={() => setLang('bn')} className={`px-2 py-1 text-[8px] font-bold rounded-lg transition-all ${lang === 'bn' ? 'bg-rose-600 text-white' : 'text-slate-500'}`}>BN</button>
                 </div>
-              )}
-            </div>
-          </nav>
-          
-          <div className="flex-1 container mx-auto max-w-6xl px-4 py-8">
-            <Routes>
-              <Route path="/" element={<OverviewView activeUser={currentUser} />} />
-              <Route path="/community" element={currentUser ? (isApproved ? <FeedView user={currentUser} /> : <PendingApprovalView user={currentUser} />) : <Navigate to="/auth" />} />
-              <Route path="/auth" element={!currentUser ? <AuthView /> : <Navigate to="/" />} />
-              <Route path="/profile/:uid" element={currentUser ? (isApproved ? <ProfileView activeUser={currentUser} /> : <PendingApprovalView user={currentUser} />) : <Navigate to="/auth" />} />
-              <Route path="/chat" element={currentUser ? (isApproved ? (isPremium ? <ChatView activeUser={currentUser} /> : <Navigate to="/pro" />) : <PendingApprovalView user={currentUser} />) : <Navigate to="/auth" />} />
-              <Route path="/chat/:chatId" element={currentUser ? (isApproved ? (isPremium ? <ChatView activeUser={currentUser} /> : <Navigate to="/pro" />) : <PendingApprovalView user={currentUser} />) : <Navigate to="/auth" />} />
-              <Route path="/pro" element={currentUser ? (isApproved ? <UpgradeView activeUser={currentUser} /> : <PendingApprovalView user={currentUser} />) : <Navigate to="/auth" />} />
-              <Route path="/admin" element={currentUser?.role === 'admin' ? <AdminView activeUser={currentUser} /> : <Navigate to="/" />} />
-              <Route path="*" element={<Navigate to="/" />} />
-            </Routes>
-          </div>
 
-          <MobileBottomNav activeUser={currentUser} />
-          <TelegramSupportButton />
-          
-          <MobileDrawer 
-            isOpen={isMobileMenuOpen} 
-            onClose={() => setIsMobileMenuOpen(false)} 
-            user={currentUser} 
-            t={t} 
-            isApproved={isApproved}
-            isPremium={isPremium}
-          />
-        </div>
-      </Router>
-    </LangContext.Provider>
+                {currentUser ? (
+                   <div className="flex items-center gap-3">
+                     {currentUser.role === 'admin' && <Link to="/admin" className="hidden lg:block px-4 py-2 bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/20 rounded-xl text-[9px] font-black uppercase text-indigo-400 shadow-lg">{t('hq')}</Link>}
+                     <div className="hidden sm:block">
+                       <Link to={`/profile/${currentUser.uid}`} className="flex items-center gap-2 group">
+                         <img src={currentUser.photoURL} className="w-8 h-8 rounded-lg object-cover ring-2 ring-white/5 group-hover:ring-rose-500/50 transition-all" alt="p" />
+                         <span className="text-[10px] font-black text-slate-200 uppercase truncate max-w-[80px]">{currentUser.displayName}</span>
+                       </Link>
+                     </div>
+                     <button onClick={() => signOut(auth)} className="hidden sm:block p-2.5 bg-white/5 hover:bg-red-500/10 rounded-xl text-slate-500 hover:text-red-500 transition-all">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+                     </button>
+                     <button onClick={() => setIsMobileMenuOpen(true)} className="md:hidden p-3 bg-slate-900 border border-white/5 rounded-xl text-slate-400 hover:text-rose-500 transition-all shadow-lg active:scale-95">
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 6h16M4 12h16M4 18h16" />
+                        </svg>
+                     </button>
+                   </div>
+                ) : (
+                  <div className="flex items-center gap-3">
+                    <Link to="/auth" className="px-6 py-2.5 bg-rose-600 hover:bg-rose-500 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-rose-600/30 transition-all active:scale-95">{t('link')}</Link>
+                    <button onClick={() => setIsMobileMenuOpen(true)} className="md:hidden p-3 bg-slate-900 border border-white/5 rounded-xl text-slate-400 hover:text-rose-500 transition-all shadow-lg active:scale-95">
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 6h16M4 12h16m-7 6h7" />
+                        </svg>
+                     </button>
+                  </div>
+                )}
+              </div>
+            </nav>
+            
+            <div className="flex-1 container mx-auto max-w-6xl px-4 py-8">
+              <Routes>
+                <Route path="/" element={<OverviewView activeUser={currentUser} />} />
+                <Route path="/community" element={currentUser ? (isApproved ? <FeedView user={currentUser} /> : <PendingApprovalView user={currentUser} />) : <Navigate to="/auth" />} />
+                <Route path="/auth" element={!currentUser ? <AuthView /> : <Navigate to="/" />} />
+                <Route path="/profile/:uid" element={currentUser ? (isApproved ? <ProfileView activeUser={currentUser} /> : <PendingApprovalView user={currentUser} />) : <Navigate to="/auth" />} />
+                <Route path="/chat" element={currentUser ? (isApproved ? (isPremium ? <ChatView activeUser={currentUser} /> : <Navigate to="/pro" />) : <PendingApprovalView user={currentUser} />) : <Navigate to="/auth" />} />
+                <Route path="/chat/:chatId" element={currentUser ? (isApproved ? (isPremium ? <ChatView activeUser={currentUser} /> : <Navigate to="/pro" />) : <Navigate to="/auth" />} />
+                <Route path="/pro" element={currentUser ? (isApproved ? <UpgradeView activeUser={currentUser} /> : <PendingApprovalView user={currentUser} />) : <Navigate to="/auth" />} />
+                <Route path="/admin" element={currentUser?.role === 'admin' ? <AdminView activeUser={currentUser} /> : <Navigate to="/" />} />
+                <Route path="*" element={<Navigate to="/" />} />
+              </Routes>
+            </div>
+
+            <MobileBottomNav activeUser={currentUser} />
+            <TelegramSupportButton />
+            
+            <MobileDrawer 
+              isOpen={isMobileMenuOpen} 
+              onClose={() => setIsMobileMenuOpen(false)} 
+              user={currentUser} 
+              t={t} 
+              isApproved={isApproved}
+              isPremium={isPremium}
+            />
+          </div>
+        </Router>
+      </LangContext.Provider>
+    </UserContext.Provider>
   );
 };
 
