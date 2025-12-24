@@ -134,6 +134,26 @@ const SecureHLogo = () => (
   </div>
 );
 
+const LanguageSwitcher = () => {
+  const { lang, setLang } = useLang();
+  return (
+    <div className="flex bg-slate-900/80 rounded-2xl p-1 border border-white/5 backdrop-blur-md shadow-inner">
+      <button 
+        onClick={() => setLang('en')} 
+        className={`px-3 py-1.5 text-[9px] font-black rounded-xl transition-all ${lang === 'en' ? 'bg-rose-600 text-white shadow-lg shadow-rose-600/30' : 'text-slate-500 hover:text-slate-300'}`}
+      >
+        EN
+      </button>
+      <button 
+        onClick={() => setLang('bn')} 
+        className={`px-3 py-1.5 text-[9px] font-black rounded-xl transition-all ${lang === 'bn' ? 'bg-rose-600 text-white shadow-lg shadow-rose-600/30' : 'text-slate-500 hover:text-slate-300'}`}
+      >
+        BN
+      </button>
+    </div>
+  );
+};
+
 const TelegramSupportButton = () => (
   <a 
     href={TELEGRAM_SUPPORT} 
@@ -162,13 +182,18 @@ const MobileDrawer: React.FC<{
     <div className="fixed inset-0 z-[100] md:hidden">
       <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-md transition-opacity" onClick={onClose}></div>
       <div className="absolute right-0 top-0 bottom-0 w-80 bg-slate-900 border-l border-white/10 shadow-2xl p-8 flex flex-col animate-slideIn">
-        <div className="flex items-center justify-between mb-12">
+        <div className="flex items-center justify-between mb-8">
           <SecureHLogo />
           <button onClick={onClose} className="p-2 text-slate-500 hover:text-white transition-colors">
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
+        </div>
+
+        <div className="mb-8 p-1 border-b border-white/5 pb-6">
+           <p className="text-[8px] font-black text-slate-600 uppercase tracking-[0.4em] mb-3">Signal Dialect</p>
+           <LanguageSwitcher />
         </div>
 
         {user ? (
@@ -208,7 +233,7 @@ const MobileDrawer: React.FC<{
               </Link>
               {user.role === 'admin' && (
                  <Link to="/admin" onClick={onClose} className="p-4 text-[11px] font-black uppercase tracking-widest text-indigo-400 hover:text-indigo-300 flex items-center gap-4 transition-all">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" /></svg>
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2-2v10a2 2 0 002 2zM9 9h6v6H9V9z" /></svg>
                     {t('hq')}
                  </Link>
               )}
@@ -242,7 +267,7 @@ const PendingApprovalView: React.FC<{ user: User }> = ({ user }) => {
         <div className="absolute inset-0 bg-rose-600/20 blur-[100px] rounded-full animate-pulse"></div>
         <div className="relative bg-slate-900 border-4 border-rose-500/50 w-32 h-32 md:w-40 md:h-40 rounded-full flex items-center justify-center shadow-2xl">
           <svg className="w-16 h-16 md:w-20 md:h-20 text-rose-500 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A10.003 10.003 0 0112 3c1.72 0 3.347.433 4.775 1.2a10 10 0 014.472 8.528c0 2.304-.775 4.428-2.083 6.13M12 11c0-3.314 2.686-6 6-6s6 2.686 6 6-2.686 6-6 6-6-2.686-6-6zm-6 2c0 1.657-1.343 3-3 3s-3-1.343-3-3 1.343-3-3-3 3 1.343 3 3z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A10.003 10.003 0 0112 3c1.72 0 3.347.433 4.775 1.2a10 10 0 014.472 8.528c0 2.304-.775 4.428-2.083 6.13M12 11c0-3.314 2.686-6 6-6s6 2.686 6 6-2.686 6-6 6-2.686 6-6 6-6-2.686-6-6zm-6 2c0 1.657-1.343 3-3 3s-3-1.343-3-3 1.343-3-3-3 3 1.343 3 3z" />
           </svg>
         </div>
       </div>
@@ -375,9 +400,8 @@ const App: React.FC = () => {
               </div>
 
               <div className="flex items-center gap-4">
-                <div className="hidden sm:flex bg-slate-900 rounded-xl p-1 border border-white/5">
-                  <button onClick={() => setLang('en')} className={`px-2 py-1 text-[8px] font-bold rounded-lg transition-all ${lang === 'en' ? 'bg-rose-600 text-white' : 'text-slate-500'}`}>EN</button>
-                  <button onClick={() => setLang('bn')} className={`px-2 py-1 text-[8px] font-bold rounded-lg transition-all ${lang === 'bn' ? 'bg-rose-600 text-white' : 'text-slate-500'}`}>BN</button>
+                <div className="flex">
+                   <LanguageSwitcher />
                 </div>
 
                 {currentUser ? (
